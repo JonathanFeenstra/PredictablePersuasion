@@ -31,21 +31,28 @@ public:
 	// based on: https://github.com/Scrabx3/Dynamic-Dialogue-Replacer/blob/3ffe893f741a9e1530c9bcb5577465b6e9ccad0b/src/Hooks/Hooks.cpp#L134-L148
 	RE::UI_MESSAGE_RESULTS ProcessMessageEx(RE::UIMessage& a_message)
 	{
-		static std::set<RE::TESTopic*> seen;
+		static std::unordered_map<RE::FormID, std::string> cache;
 		switch (*a_message.type) {
 		case RE::UI_MESSAGE_TYPE::kShow:
 		case RE::UI_MESSAGE_TYPE::kUpdate:
 			if (const auto dialogueList = RE::MenuTopicManager::GetSingleton()->dialogueList) {
 				for (auto it = dialogueList->begin(); it != dialogueList->end(); ++it) {
 					const auto dialogue = *it;
-					if (!dialogue || !seen.insert(dialogue->parentTopic).second)
+					if (!dialogue)
 						continue;
+					const auto formID = dialogue->parentTopic->formID;
+					auto where = cache.find(formID);
+					if (where != cache.end()) {
+						dialogue->topicText = where->second;
+						continue;
+					}
 					formatTopicText(dialogue);
+					cache[formID] = dialogue->topicText;
 				}
 			}
 			break;
 		case RE::UI_MESSAGE_TYPE::kHide:
-			seen.clear();
+			cache.clear();
 			break;
 		}
 
