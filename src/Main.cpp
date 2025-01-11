@@ -75,7 +75,7 @@ private:
 		float requiredSpeechLevel;  // only applicable for persuasion (bribes and intimidation are more complicated: https://en.uesp.net/wiki/Skyrim:Speech#Bribe_Formula)
 	};
 
-	static inline void formatTopicText(RE::MenuTopicManager::Dialogue* a_dialogue)
+	static void formatTopicText(RE::MenuTopicManager::Dialogue* a_dialogue)
 	{
 		const auto speechCheckData = getSpeechCheckData(a_dialogue);
 		const auto& checkResult = speechCheckData.passesCheck ? Settings::checkSuccessString : Settings::checkFailureString;
@@ -116,7 +116,7 @@ private:
 		return result;
 	}
 
-	static inline void HydrateTextData(SpeechCheckData& a_speechCheckData, const std::string& a_topicText)
+	static void HydrateTextData(SpeechCheckData& a_speechCheckData, const std::string& a_topicText)
 	{
 		std::smatch tagMatch;
 		try {
@@ -146,21 +146,23 @@ private:
 				auto conditionItem = responseInfo->objConditions.head;
 				while (conditionItem) {
 					const auto data = conditionItem->data;
-					if (data.functionData.function == RE::FUNCTION_DATA::FunctionID::kGetActorValue) {
+					const auto function = data.functionData.function;
+					// evaluating the full responseInfo.objConditions doesn't always return the correct result, so only evaluate the speech checks
+					if (function == RE::FUNCTION_DATA::FunctionID::kGetActorValue) {
 						const auto actorValue = static_cast<RE::ActorValue>(reinterpret_cast<intptr_t>(data.functionData.params[0]));
 						if (actorValue == RE::ActorValue::kSpeech && data.flags.opCode == RE::CONDITION_ITEM_DATA::OpCode::kGreaterThanOrEqualTo) {
 							a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kPersuade;
 							a_speechCheckData.requiredSpeechLevel = data.comparisonValue.g ? data.comparisonValue.g->value : data.comparisonValue.f;
-							a_speechCheckData.passesCheck = passesCondition(&responseInfo->objConditions);
+							a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, true);
 							return;
 						}
-					} else if (data.functionData.function == RE::FUNCTION_DATA::FunctionID::kGetBribeSuccess) {
+					} else if (function == RE::FUNCTION_DATA::FunctionID::kGetBribeSuccess) {
 						a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kBribe;
-						a_speechCheckData.passesCheck = passesCondition(&responseInfo->objConditions);
+						a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, false);
 						return;
-					} else if (data.functionData.function == RE::FUNCTION_DATA::FunctionID::kGetIntimidateSuccess) {
+					} else if (function == RE::FUNCTION_DATA::FunctionID::kGetIntimidateSuccess) {
 						a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kIntimidate;
-						a_speechCheckData.passesCheck = passesCondition(&responseInfo->objConditions);
+						a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, false);
 						return;
 					}
 					conditionItem = conditionItem->next;
@@ -170,10 +172,21 @@ private:
 		}
 	}
 
-	static inline bool passesCondition(const RE::TESCondition* a_condition)
+	static bool evaluateSpeechCheck(const RE::TESConditionItem* a_conditionItem, bool a_checkForAmuletOfArticulation)
 	{
 		const auto speaker = RE::MenuTopicManager::GetSingleton()->speaker.get().get();
-		return a_condition->IsTrue(speaker, RE::PlayerCharacter::GetSingleton());
+		const auto player = RE::PlayerCharacter::GetSingleton();
+		auto checkParams = RE::ConditionCheckParams(speaker, player);
+		const auto result = a_conditionItem->IsTrue(checkParams);
+		if (result)
+			return true;
+		// persuasion checks are usually followed by checking if the Amulet of Articulation is equipped
+		if (!a_checkForAmuletOfArticulation || !a_conditionItem->data.flags.isOR || !a_conditionItem->next || a_conditionItem->next->data.functionData.function != RE::FUNCTION_DATA::FunctionID::kGetEquipped)
+			return false;
+		// the following forms should be the same here:
+		//const auto formToCheck = std::bit_cast<RE::TESForm*>(a_conditionItem->next->data.functionData.params[0]);
+		//const auto amuletOfArticulationFormList = RE::TESForm::LookupByEditorID("TGAmuletOfArticulationList");
+		return a_conditionItem->next->IsTrue(checkParams);
 	}
 };
 
