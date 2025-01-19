@@ -19,10 +19,16 @@ configure_file(
         @ONLY)
 
 set(headers
+        src/Events.h
+        src/Hooks.h
+        src/Scaleform.h
         src/Settings.h)
 
 set(sources
+        src/Events.cpp
+        src/Hooks.cpp
         src/Main.cpp
+        src/Scaleform.cpp
         src/Settings.cpp
 
         ${CMAKE_CURRENT_BINARY_DIR}/version.rc)

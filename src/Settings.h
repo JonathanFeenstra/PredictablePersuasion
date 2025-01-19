@@ -20,6 +20,14 @@ public:
 	static inline std::regex intimidateTagRegex;
 	static inline std::regex bribeTagRegex;
 
+	// [TextColors]
+	static inline bool applyTextColors;
+	static inline std::uint32_t successColor;
+	static inline std::uint32_t failureColorNew;
+	static inline std::uint32_t failureColorOld;
+	static inline std::uint32_t regularColorNew;
+	static inline std::uint32_t regularColorOld;
+
 	// Prevent instantiation
 	Settings() = default;
 	Settings(const Settings&) = delete;

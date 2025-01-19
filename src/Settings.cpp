@@ -30,13 +30,23 @@ void Settings::Load()
 	ini.SetSpaces();
 	ini.LoadFile(R"(.\Data\SKSE\Plugins\PredictablePersuasion.ini)");
 
+	// [Formats]
 	persuadeFormat = ini.GetValue("Formats", "sPersuadeFormat", "{0} ({1} Level {3}: {2})");
 	intimidateFormat = ini.GetValue("Formats", "sIntimidateFormat", "{0} ({1}: {2})");
 	bribeFormat = ini.GetValue("Formats", "sBribeFormat", "{0} (Bribe with {1}: {2})");
 
+	// [CheckResults]
 	checkSuccessString = ini.GetValue("CheckResults", "sSuccess", "Success");
 	checkFailureString = ini.GetValue("CheckResults", "sFailure", "Failure");
 	noCheckString = ini.GetValue("CheckResults", "sNoCheck", "No Check");
+
+	// [TextColors]
+	applyTextColors = ini.GetBoolValue("TextColors", "bApplyTextColors", true);
+	successColor = ini.GetLongValue("TextColors", "uSuccessColor", 0x00FF00);
+	failureColorNew = ini.GetLongValue("TextColors", "uFailureColorNew", 0xFF0000);
+	failureColorOld = ini.GetLongValue("TextColors", "uFailureColorOld", 0x600000);
+	regularColorNew = ini.GetLongValue("TextColors", "uRegularColorNew", 0xFFFFFF);
+	regularColorOld = ini.GetLongValue("TextColors", "uRegularColorOld", 0x606060);
 
 	try {
 		persuadeTagRegex = ini.GetValue("TagRegex", "sPersuadeTagRegex", " (\\(Persuade\\))$");
