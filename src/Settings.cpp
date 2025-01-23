@@ -31,23 +31,16 @@ void Settings::Load()
 	ini.LoadFile(R"(.\Data\SKSE\Plugins\PredictablePersuasion.ini)");
 
 	// [Formats]
-	persuadeFormat = ini.GetValue("Formats", "sPersuadeFormat", "{0} ({1} Level {3}: {2})");
-	intimidateFormat = ini.GetValue("Formats", "sIntimidateFormat", "{0} ({1}: {2})");
-	bribeFormat = ini.GetValue("Formats", "sBribeFormat", "{0} (Bribe with {1}: {2})");
+	persuadeFormat = ini.GetValue("Formats", "sPersuadeFormat", "{0} ({1} Level {3}");
+	intimidateFormat = ini.GetValue("Formats", "sIntimidateFormat", "{0} ({1})");
+	bribeFormat = ini.GetValue("Formats", "sBribeFormat", "{0} (Bribe with {1})");
 
 	// [CheckResults]
 	checkSuccessString = ini.GetValue("CheckResults", "sSuccess", "Success");
 	checkFailureString = ini.GetValue("CheckResults", "sFailure", "Failure");
 	noCheckString = ini.GetValue("CheckResults", "sNoCheck", "No Check");
 
-	// [TextColors]
-	applyTextColors = ini.GetBoolValue("TextColors", "bApplyTextColors", true);
-	successColor = ini.GetLongValue("TextColors", "uSuccessColor", 0x00FF00);
-	failureColorNew = ini.GetLongValue("TextColors", "uFailureColorNew", 0xFF0000);
-	failureColorOld = ini.GetLongValue("TextColors", "uFailureColorOld", 0x600000);
-	regularColorNew = ini.GetLongValue("TextColors", "uRegularColorNew", 0xFFFFFF);
-	regularColorOld = ini.GetLongValue("TextColors", "uRegularColorOld", 0x606060);
-
+	// [TagRegex]
 	try {
 		persuadeTagRegex = ini.GetValue("TagRegex", "sPersuadeTagRegex", " (\\(Persuade\\))$");
 		intimidateTagRegex = ini.GetValue("TagRegex", "sIntimidateTagRegex", " (\\(Intimidate\\))$");
@@ -58,4 +51,12 @@ void Settings::Load()
 		bribeTagRegex = " (\\(\\d+ gold\\))$";
 		logger::error("Failed to compile regex: {}", e.what());
 	}
+
+	// [TextColors]
+	applyTextColors = ini.GetBoolValue("TextColors", "bApplyTextColors", true);
+	successColor = ini.GetLongValue("TextColors", "uSuccessColor", 0x00FF00);
+	failureColorNew = ini.GetLongValue("TextColors", "uFailureColorNew", 0xFF0000);
+	failureColorOld = ini.GetLongValue("TextColors", "uFailureColorOld", 0x600000);
+	regularColorNew = ini.GetLongValue("TextColors", "uRegularColorNew", 0xFFFFFF);
+	regularColorOld = ini.GetLongValue("TextColors", "uRegularColorOld", 0x606060);
 }
