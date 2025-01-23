@@ -21,6 +21,7 @@ See EXCEPTIONS for additional permissions.
 
 #include "Events.h"
 #include "Settings.h"
+#include "StringUtil.h"
 
 namespace Hooks
 {
@@ -151,6 +152,10 @@ namespace Hooks
 
 	void DialogueMenuEx::hydrateCheckData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept
 	{
+		if (StringUtil::LowerCaseContains(a_topic->fullName, "<bribecost>")) {
+			a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kBribe;
+		}
+
 		// based on: https://github.com/Scrabx3/Dynamic-Dialogue-Replacer/blob/3ffe893f741a9e1530c9bcb5577465b6e9ccad0b/src/Hooks/Hooks.cpp#L96-L105
 		auto infoPtr = a_topic->topicInfos;
 		for (auto i = a_topic->numTopicInfos; i > 0; --i) {
@@ -158,6 +163,20 @@ namespace Hooks
 				return;
 			if (const auto responseInfo = *infoPtr) {
 				auto conditionItem = responseInfo->objConditions.head;
+				if (!conditionItem) {
+					a_speechCheckData.passesCheck = true;
+					return;
+				}
+				if (a_speechCheckData.checkType == SPEECH_CHECK_TYPE::kBribe) {
+					// not all bribes have speech checks, so check if the other conditions are met
+					const auto speaker = RE::MenuTopicManager::GetSingleton()->speaker.get().get();
+					const auto player = RE::PlayerCharacter::GetSingleton();
+					if (responseInfo->objConditions.IsTrue(speaker, player)) {
+						a_speechCheckData.passesCheck = true;
+						return;
+					}
+				}
+
 				while (conditionItem) {
 					const auto data = conditionItem->data;
 					const auto function = data.functionData.function;

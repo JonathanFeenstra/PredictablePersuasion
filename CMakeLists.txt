@@ -22,7 +22,8 @@ set(headers
         src/Events.h
         src/Hooks.h
         src/Scaleform.h
-        src/Settings.h)
+        src/Settings.h
+        src/StringUtil.h)
 
 set(sources
         src/Events.cpp
@@ -30,6 +31,7 @@ set(sources
         src/Main.cpp
         src/Scaleform.cpp
         src/Settings.cpp
+        src/StringUtil.cpp
 
         ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 
