@@ -23,7 +23,10 @@ See EXCEPTIONS for additional permissions.
 
 namespace Scaleform
 {
-	void SetEntryTextFunctionHandler::Install(const std::set<std::string>* a_successTopics, const std::set<std::string>* a_failureTopics) noexcept
+	void SetEntryTextFunctionHandler::Install(
+		const std::set<std::string>* a_successTopics,
+		const std::set<std::string>* a_failureTopics,
+		const std::set<std::string>* a_noCheckTopics) noexcept
 	{
 		const auto ui = RE::UI::GetSingleton();
 		if (!ui) {
@@ -47,6 +50,7 @@ namespace Scaleform
 		auto setEntryTextFunction = RE::make_gptr<Scaleform::SetEntryTextFunctionHandler>();
 		setEntryTextFunction->successTopics = a_successTopics;
 		setEntryTextFunction->failureTopics = a_failureTopics;
+		setEntryTextFunction->noCheckTopics = a_noCheckTopics;
 
 		menu->uiMovie->CreateFunction(&setEntryText, setEntryTextFunction.get());
 		topicList.SetMember("SetEntryText", setEntryText);
@@ -105,9 +109,11 @@ namespace Scaleform
 		if (successTopics->find(textStr) != successTopics->end()) {
 			textColor = RE::GFxValue(Settings::successColor);
 		} else if (failureTopics->find(textStr) != failureTopics->end()) {
-			textColor = a_topicIsNew ? RE::GFxValue(Settings::failureColorNew) : RE::GFxValue(Settings::failureColorOld);
+			textColor = RE::GFxValue(a_topicIsNew ? Settings::failureColorNew : Settings::failureColorOld);
+		} else if (noCheckTopics->find(textStr) != noCheckTopics->end()) {
+			textColor = RE::GFxValue(a_topicIsNew ? Settings::noCheckColorNew : Settings::noCheckColorOld);
 		} else {
-			textColor = a_topicIsNew ? RE::GFxValue(Settings::regularColorNew) : RE::GFxValue(Settings::regularColorOld);
+			textColor = RE::GFxValue(a_topicIsNew ? Settings::regularColorNew : Settings::regularColorOld);
 		}
 
 		a_textField.SetMember("textColor", textColor);

@@ -36,13 +36,14 @@ namespace Hooks
 		// the ActionScript 2 code of the dialogue menu only has access to the text of the topics, so the topics that should be colored are stored
 		static inline std::set<std::string> successTopics;
 		static inline std::set<std::string> failureTopics;
+		static inline std::set<std::string> noCheckTopics;
 
 		static void formatTopicText(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 
 		static SpeechCheckData getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
-		static void storeFormattedTopicText(const std::string& a_topicText, bool a_successOrNoCheck) noexcept;
+		static void storeFormattedTopicText(const std::string& a_topicText, std::set<std::string>* a_set) noexcept;
 
-		static void hydrateTextData(SpeechCheckData& a_speechCheckData, const std::string& a_topicText) noexcept;
+		static void hydrateTextData(SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 		static void hydrateCheckData(SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept;
 
 		static bool evaluateSpeechCheck(const RE::TESConditionItem* a_conditionItem, bool a_checkForAmuletOfArticulation) noexcept;

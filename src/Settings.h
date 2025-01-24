@@ -25,6 +25,8 @@ public:
 	static inline std::uint32_t successColor;
 	static inline std::uint32_t failureColorNew;
 	static inline std::uint32_t failureColorOld;
+	static inline std::uint32_t noCheckColorNew;
+	static inline std::uint32_t noCheckColorOld;
 	static inline std::uint32_t regularColorNew;
 	static inline std::uint32_t regularColorOld;
 

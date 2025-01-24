@@ -57,6 +57,8 @@ void Settings::Load()
 	successColor = ini.GetLongValue("TextColors", "uSuccessColor", 0x00FF00);
 	failureColorNew = ini.GetLongValue("TextColors", "uFailureColorNew", 0xFF0000);
 	failureColorOld = ini.GetLongValue("TextColors", "uFailureColorOld", 0x600000);
+	noCheckColorNew = ini.GetLongValue("TextColors", "uNoCheckColorNew", 0xFFFF00);
+	noCheckColorOld = ini.GetLongValue("TextColors", "uNoCheckColorOld", 0x606000);
 	regularColorNew = ini.GetLongValue("TextColors", "uRegularColorNew", 0xFFFFFF);
 	regularColorOld = ini.GetLongValue("TextColors", "uRegularColorOld", 0x606060);
 }

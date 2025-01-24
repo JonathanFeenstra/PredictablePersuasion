@@ -35,7 +35,7 @@ namespace Hooks
 		REL::Relocation<uintptr_t> vtbl(RE::VTABLE_DialogueMenu[0]);
 		_ProcessMessageFn = vtbl.write_vfunc(0x4, &ProcessMessageEx);
 		if (Settings::applyTextColors) {
-			Events::MenuOpenCloseEventSink::Install(&successTopics, &failureTopics);
+			Events::MenuOpenCloseEventSink::Install(&successTopics, &failureTopics, &noCheckTopics);
 		}
 	}
 
@@ -76,34 +76,39 @@ namespace Hooks
 	void DialogueMenuEx::formatTopicText(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
 	{
 		const auto speechCheckData = getSpeechCheckData(a_dialogue);
-		const auto& checkResult = speechCheckData.passesCheck ? Settings::checkSuccessString : Settings::checkFailureString;
-		switch (speechCheckData.checkType) {
+		SPEECH_CHECK_TYPE checkType;
+		std::set<std::string>* resultSet;
+		std::string resultText;
+		if (speechCheckData.checkType == SPEECH_CHECK_TYPE::kNone) {
+			resultSet = &noCheckTopics;
+			resultText = Settings::noCheckString;
+			checkType = speechCheckData.tagType;
+		} else {
+			checkType = speechCheckData.checkType;
+			if (speechCheckData.passesCheck) {
+				resultSet = &successTopics;
+				resultText = Settings::checkSuccessString;
+			} else {
+				resultSet = &failureTopics;
+				resultText = Settings::checkFailureString;
+			}
+		}
+			
+		switch (checkType) {
+		case SPEECH_CHECK_TYPE::kNone:
+			return;  // neither the tag nor the actual check indicate a speech check, so a regular topic is assumed
 		case SPEECH_CHECK_TYPE::kPersuade:
-			a_dialogue->topicText = std::vformat(Settings::persuadeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, checkResult, speechCheckData.requiredSpeechLevel));
-			storeFormattedTopicText(a_dialogue->topicText.c_str(), speechCheckData.passesCheck);
+			a_dialogue->topicText = std::vformat(Settings::persuadeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText, speechCheckData.requiredSpeechLevel));
 			break;
 		case SPEECH_CHECK_TYPE::kIntimidate:
-			a_dialogue->topicText = std::vformat(Settings::intimidateFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, checkResult));
-			storeFormattedTopicText(a_dialogue->topicText.c_str(), speechCheckData.passesCheck);
+			a_dialogue->topicText = std::vformat(Settings::intimidateFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
 			break;
 		case SPEECH_CHECK_TYPE::kBribe:
-			a_dialogue->topicText = std::vformat(Settings::bribeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, checkResult));
-			storeFormattedTopicText(a_dialogue->topicText.c_str(), speechCheckData.passesCheck);
-			break;
-		case SPEECH_CHECK_TYPE::kNone:
-			switch (speechCheckData.tagType) {
-			case SPEECH_CHECK_TYPE::kPersuade:
-				a_dialogue->topicText = std::vformat(Settings::persuadeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, Settings::noCheckString, speechCheckData.requiredSpeechLevel));
-				storeFormattedTopicText(a_dialogue->topicText.c_str(), true);
-				break;
-			case SPEECH_CHECK_TYPE::kIntimidate:
-				a_dialogue->topicText = std::vformat(Settings::intimidateFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, Settings::noCheckString));
-				storeFormattedTopicText(a_dialogue->topicText.c_str(), true);
-				break;
-				// kBribe is not included here because the (... gold) tag is not exclusively used for bribes
-			}
+			a_dialogue->topicText = std::vformat(Settings::bribeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
 			break;
 		}
+
+		storeFormattedTopicText(a_dialogue->topicText.c_str(), resultSet);
 	}
 
 	DialogueMenuEx::SpeechCheckData DialogueMenuEx::getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
@@ -113,49 +118,42 @@ namespace Hooks
 		if (!topic)
 			return result;
 
-		const std::string topicText(a_dialogue->topicText.c_str(), a_dialogue->topicText.size());
-		hydrateTextData(result, topicText);
+		
+		hydrateTextData(result, a_dialogue);
 		hydrateCheckData(result, topic);
 		return result;
 	}
 
-	void DialogueMenuEx::storeFormattedTopicText(const std::string& a_topicText, bool a_successOrNoCheck) noexcept
+	void DialogueMenuEx::storeFormattedTopicText(const std::string& a_topicText, std::set<std::string>* a_set) noexcept
 	{
 		if (!Settings::applyTextColors)
 			return;
 
-		if (a_successOrNoCheck) {
-			successTopics.insert(a_topicText);
-		} else {
-			failureTopics.insert(a_topicText);
-		}
+		a_set->insert(a_topicText);
 	}
 
-	void DialogueMenuEx::hydrateTextData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const std::string& a_topicText) noexcept
+	void DialogueMenuEx::hydrateTextData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
 	{
+		const std::string topicText(a_dialogue->topicText.c_str(), a_dialogue->topicText.size());
 		std::smatch tagMatch;
 		try {
-			if (std::regex_search(a_topicText, tagMatch, Settings::persuadeTagRegex)) {
+			if (std::regex_search(topicText, tagMatch, Settings::persuadeTagRegex)) {
 				a_speechCheckData.tagType = SPEECH_CHECK_TYPE::kPersuade;
-			} else if (std::regex_search(a_topicText, tagMatch, Settings::intimidateTagRegex)) {
+			} else if (std::regex_search(topicText, tagMatch, Settings::intimidateTagRegex)) {
 				a_speechCheckData.tagType = SPEECH_CHECK_TYPE::kIntimidate;
-			} else if (std::regex_search(a_topicText, tagMatch, Settings::bribeTagRegex)) {
+			} else if (std::regex_search(topicText, tagMatch, Settings::bribeTagRegex) && StringUtil::LowerCaseContains(a_dialogue->parentTopic->fullName, "<bribecost>")) {
 				a_speechCheckData.tagType = SPEECH_CHECK_TYPE::kBribe;
 			}
 		} catch (const std::regex_error& e) {
 			logger::error("Failed to match regex: {}", e.what());
 		}
 
-		a_speechCheckData.mainText = a_topicText.substr(0, a_topicText.size() - tagMatch.length());
+		a_speechCheckData.mainText = topicText.substr(0, topicText.size() - tagMatch.length());
 		a_speechCheckData.tagText = tagMatch.str(1);
 	}
 
 	void DialogueMenuEx::hydrateCheckData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept
 	{
-		if (StringUtil::LowerCaseContains(a_topic->fullName, "<bribecost>")) {
-			a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kBribe;
-		}
-
 		// based on: https://github.com/Scrabx3/Dynamic-Dialogue-Replacer/blob/3ffe893f741a9e1530c9bcb5577465b6e9ccad0b/src/Hooks/Hooks.cpp#L96-L105
 		auto infoPtr = a_topic->topicInfos;
 		for (auto i = a_topic->numTopicInfos; i > 0; --i) {
@@ -163,19 +161,6 @@ namespace Hooks
 				return;
 			if (const auto responseInfo = *infoPtr) {
 				auto conditionItem = responseInfo->objConditions.head;
-				if (!conditionItem) {
-					a_speechCheckData.passesCheck = true;
-					return;
-				}
-				if (a_speechCheckData.checkType == SPEECH_CHECK_TYPE::kBribe) {
-					// not all bribes have speech checks, so check if the other conditions are met
-					const auto speaker = RE::MenuTopicManager::GetSingleton()->speaker.get().get();
-					const auto player = RE::PlayerCharacter::GetSingleton();
-					if (responseInfo->objConditions.IsTrue(speaker, player)) {
-						a_speechCheckData.passesCheck = true;
-						return;
-					}
-				}
 
 				while (conditionItem) {
 					const auto data = conditionItem->data;

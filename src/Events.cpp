@@ -23,11 +23,15 @@ See EXCEPTIONS for additional permissions.
 
 namespace Events
 {
-	void MenuOpenCloseEventSink::Install(const std::set<std::string>* a_successTopics, const std::set<std::string>* a_failureTopics) noexcept
+	void MenuOpenCloseEventSink::Install(
+		const std::set<std::string>* a_successTopics,
+		const std::set<std::string>* a_failureTopics,
+		const std::set<std::string>* a_noCheckTopics) noexcept
 	{
 		const auto singleton = GetSingleton();
 		singleton->successTopics = a_successTopics;
 		singleton->failureTopics = a_failureTopics;
+		singleton->noCheckTopics = a_noCheckTopics;
 		if (const auto ui = RE::UI::GetSingleton()) {
 			ui->AddEventSink(singleton);
 		}
@@ -42,7 +46,7 @@ namespace Events
 	RE::BSEventNotifyControl MenuOpenCloseEventSink::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 	{
 		if (a_event->menuName == RE::DialogueMenu::MENU_NAME && a_event->opening) {
-			Scaleform::SetEntryTextFunctionHandler::Install(successTopics, failureTopics);
+			Scaleform::SetEntryTextFunctionHandler::Install(successTopics, failureTopics, noCheckTopics);
 		}
 		return RE::BSEventNotifyControl::kContinue;
 	}
