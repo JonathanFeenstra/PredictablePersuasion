@@ -6,6 +6,7 @@ public:
 	static void Load();
 
 	// [Formats]
+	static inline bool applyFormatting;
 	static inline std::string persuadeFormat;
 	static inline std::string intimidateFormat;
 	static inline std::string bribeFormat;

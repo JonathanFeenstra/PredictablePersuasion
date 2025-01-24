@@ -38,11 +38,9 @@ namespace Hooks
 		static inline std::set<std::string> failureTopics;
 		static inline std::set<std::string> noCheckTopics;
 
-		static void formatTopicText(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
+		static void processTopic(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 
 		static SpeechCheckData getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
-		static void storeFormattedTopicText(const std::string& a_topicText, std::set<std::string>* a_set) noexcept;
-
 		static void hydrateTextData(SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 		static void hydrateCheckData(SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept;
 

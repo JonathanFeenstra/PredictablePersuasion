@@ -31,6 +31,7 @@ void Settings::Load()
 	ini.LoadFile(R"(.\Data\SKSE\Plugins\PredictablePersuasion.ini)");
 
 	// [Formats]
+	applyFormatting = ini.GetBoolValue("Formats", "bApplyFormatting", true);
 	persuadeFormat = ini.GetValue("Formats", "sPersuadeFormat", "{0} ({1} Level {3}");
 	intimidateFormat = ini.GetValue("Formats", "sIntimidateFormat", "{0} ({1})");
 	bribeFormat = ini.GetValue("Formats", "sBribeFormat", "{0} (Bribe with {1})");

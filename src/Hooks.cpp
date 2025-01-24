@@ -56,7 +56,7 @@ namespace Hooks
 						dialogue->topicText = where->second;
 						continue;
 					}
-					formatTopicText(dialogue);
+					processTopic(dialogue);
 					cache[formID] = dialogue->topicText;
 				}
 			}
@@ -73,7 +73,7 @@ namespace Hooks
 		return _ProcessMessageFn(this, a_message);
 	}
 
-	void DialogueMenuEx::formatTopicText(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
+	void DialogueMenuEx::processTopic(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
 	{
 		const auto speechCheckData = getSpeechCheckData(a_dialogue);
 		SPEECH_CHECK_TYPE checkType;
@@ -93,22 +93,27 @@ namespace Hooks
 				resultText = Settings::checkFailureString;
 			}
 		}
-			
-		switch (checkType) {
-		case SPEECH_CHECK_TYPE::kNone:
-			return;  // neither the tag nor the actual check indicate a speech check, so a regular topic is assumed
-		case SPEECH_CHECK_TYPE::kPersuade:
-			a_dialogue->topicText = std::vformat(Settings::persuadeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText, speechCheckData.requiredSpeechLevel));
-			break;
-		case SPEECH_CHECK_TYPE::kIntimidate:
-			a_dialogue->topicText = std::vformat(Settings::intimidateFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
-			break;
-		case SPEECH_CHECK_TYPE::kBribe:
-			a_dialogue->topicText = std::vformat(Settings::bribeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
-			break;
+		
+		if (Settings::applyFormatting) {
+			switch (checkType) {
+			case SPEECH_CHECK_TYPE::kNone:
+				return;  // neither the tag nor the response conditions indicate a speech check, so a regular topic is assumed
+			case SPEECH_CHECK_TYPE::kPersuade:
+				a_dialogue->topicText = std::vformat(Settings::persuadeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText, speechCheckData.requiredSpeechLevel));
+				break;
+			case SPEECH_CHECK_TYPE::kIntimidate:
+				a_dialogue->topicText = std::vformat(Settings::intimidateFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
+				break;
+			case SPEECH_CHECK_TYPE::kBribe:
+				a_dialogue->topicText = std::vformat(Settings::bribeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
+				break;
+			}
 		}
 
-		storeFormattedTopicText(a_dialogue->topicText.c_str(), resultSet);
+		if (Settings::applyTextColors)
+		{
+			resultSet->insert(a_dialogue->topicText.c_str());
+		}
 	}
 
 	DialogueMenuEx::SpeechCheckData DialogueMenuEx::getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
@@ -118,18 +123,9 @@ namespace Hooks
 		if (!topic)
 			return result;
 
-		
 		hydrateTextData(result, a_dialogue);
 		hydrateCheckData(result, topic);
 		return result;
-	}
-
-	void DialogueMenuEx::storeFormattedTopicText(const std::string& a_topicText, std::set<std::string>* a_set) noexcept
-	{
-		if (!Settings::applyTextColors)
-			return;
-
-		a_set->insert(a_topicText);
 	}
 
 	void DialogueMenuEx::hydrateTextData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
