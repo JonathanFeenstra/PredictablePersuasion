@@ -1,14 +1,13 @@
 #pragma once
 
+#include "Scaleform.h"
+
 namespace Events
 {
 	class MenuOpenCloseEventSink final : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 	{
 	public:
-		static void Install(
-			const std::set<std::string>* a_successTopics,
-			const std::set<std::string>* a_failureTopics,
-			const std::set<std::string>* a_noCheckTopics) noexcept;
+		static void Install(const std::unordered_map<std::string, Scaleform::TopicDisplayData>* a_topicDisplayData) noexcept;
 
 		static MenuOpenCloseEventSink* GetSingleton() noexcept;
 		RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;
@@ -21,8 +20,6 @@ namespace Events
 	private:
 		MenuOpenCloseEventSink() {};
 
-		const std::set<std::string>* successTopics;
-		const std::set<std::string>* failureTopics;
-		const std::set<std::string>* noCheckTopics;
+		const std::unordered_map<std::string, Scaleform::TopicDisplayData>* topicDisplayData;
 	};
 }

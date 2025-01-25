@@ -23,10 +23,7 @@ See EXCEPTIONS for additional permissions.
 
 namespace Scaleform
 {
-	void SetEntryTextFunctionHandler::Install(
-		const std::set<std::string>* a_successTopics,
-		const std::set<std::string>* a_failureTopics,
-		const std::set<std::string>* a_noCheckTopics) noexcept
+	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
 	{
 		const auto ui = RE::UI::GetSingleton();
 		if (!ui) {
@@ -34,33 +31,45 @@ namespace Scaleform
 			return;
 		}
 
-		const auto menu = ui->GetMenu<RE::DialogueMenu>();
-		if (!menu) {
+		const auto dialogueMenu = ui->GetMenu<RE::DialogueMenu>().get();
+		if (!dialogueMenu) {
 			logger::error("Failed to get DialogueMenu");
 			return;
 		}
 
 		RE::GFxValue topicList;
-		if (!menu->uiMovie->GetVariable(&topicList, "_root.DialogueMenu_mc.TopicListHolder.List_mc")) {
+		if (!dialogueMenu->uiMovie->GetVariable(&topicList, "_root.DialogueMenu_mc.TopicListHolder.List_mc")) {
 			logger::error("Failed to get TopicList");
 			return;
 		}
 
-		RE::GFxValue setEntryText;
-		auto setEntryTextFunction = RE::make_gptr<Scaleform::SetEntryTextFunctionHandler>();
-		setEntryTextFunction->successTopics = a_successTopics;
-		setEntryTextFunction->failureTopics = a_failureTopics;
-		setEntryTextFunction->noCheckTopics = a_noCheckTopics;
+		if (Settings::applyTopicColors) {
+			SetEntryTextFunctionHandler::Install(dialogueMenu, topicList, a_topicDisplayData);
+		}
 
-		menu->uiMovie->CreateFunction(&setEntryText, setEntryTextFunction.get());
-		topicList.SetMember("SetEntryText", setEntryText);
+		if (Settings::showSubtitles != Settings::SHOW_SUBTITLES::kNever) {
+			DoSetSelectedIndexFunctionHandler::Install(dialogueMenu, topicList, a_topicDisplayData);
+		}
+	}
+
+	void SetEntryTextFunctionHandler::Install(
+		const RE::DialogueMenu* a_dialogueMenu,
+		RE::GFxValue a_topicList,
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	{
+		auto handler = RE::make_gptr<Scaleform::SetEntryTextFunctionHandler>();
+		handler->topicDisplayData = a_topicDisplayData;
+
+		RE::GFxValue setEntryText;
+		a_dialogueMenu->uiMovie->CreateFunction(&setEntryText, handler.get());
+		a_topicList.SetMember("SetEntryText", setEntryText);
 	}
 
 	// replaces: https://github.com/Mardoxx/skyrimui/blob/425aa8a31de31fb11fe78ee6cec799f4ba31af03/src/dialoguemenu/DialogueCenteredList.as#L23-L29
 	void SetEntryTextFunctionHandler::Call(Params& a_params)
 	{
 		if (a_params.argCount < 2) {
-			logger::error("SetEntry: Expected at least 2 arguments, found {}", a_params.argCount);
+			logger::error("SetEntry: Expected 2 arguments, found {}", a_params.argCount);
 			return;
 		}
 
@@ -104,18 +113,55 @@ namespace Scaleform
 	{
 		RE::GFxValue text;
 		a_textField.GetMember("text", &text);
-		const auto textStr = text.GetString();
-		RE::GFxValue textColor;
-		if (successTopics->find(textStr) != successTopics->end()) {
-			textColor = RE::GFxValue(Settings::successColor);
-		} else if (failureTopics->find(textStr) != failureTopics->end()) {
-			textColor = RE::GFxValue(a_topicIsNew ? Settings::failureColorNew : Settings::failureColorOld);
-		} else if (noCheckTopics->find(textStr) != noCheckTopics->end()) {
-			textColor = RE::GFxValue(a_topicIsNew ? Settings::noCheckColorNew : Settings::noCheckColorOld);
-		} else {
-			textColor = RE::GFxValue(a_topicIsNew ? Settings::regularColorNew : Settings::regularColorOld);
+		const auto textStr = std::string(text.GetString());
+		const auto where = topicDisplayData->find(textStr);
+		if (where == topicDisplayData->end())
+			return;
+
+		const auto& displayData = where->second;
+		RE::GFxValue textColor(a_topicIsNew ? displayData.newColor : displayData.oldColor);
+		a_textField.SetMember("textColor", textColor);
+	}
+
+	void DoSetSelectedIndexFunctionHandler::Install(
+		const RE::DialogueMenu* a_dialogueMenu,
+		RE::GFxValue a_topicList,
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	{
+		auto handler = RE::make_gptr<Scaleform::DoSetSelectedIndexFunctionHandler>();
+		handler->topicDisplayData = a_topicDisplayData;
+		handler->topicList = a_topicList;
+		if (!a_dialogueMenu->uiMovie->GetVariable(&handler->dialogueMenu, "_root.DialogueMenu_mc")) {
+			logger::error("Failed to get DialogueMenu_mc");
+			return;
 		}
 
-		a_textField.SetMember("textColor", textColor);
+		RE::GFxValue doSetSelectedIndexOriginal;
+		handler->topicList.GetMember("doSetSelectedIndex", &doSetSelectedIndexOriginal);
+		handler->topicList.SetMember("doSetSelectedIndexOriginal", doSetSelectedIndexOriginal);
+
+		RE::GFxValue doSetSelectedIndexNew;
+		a_dialogueMenu->uiMovie->CreateFunction(&doSetSelectedIndexNew, handler.get());
+		handler->topicList.SetMember("doSetSelectedIndex", doSetSelectedIndexNew);
+	}
+
+	// replaces: https://github.com/Mardoxx/skyrimui/blob/425aa8a31de31fb11fe78ee6cec799f4ba31af03/src/common/Shared/BSScrollingList.as#L159-L182
+	void DoSetSelectedIndexFunctionHandler::Call(Params& a_params)
+	{
+		topicList.Invoke("doSetSelectedIndexOriginal", nullptr, a_params.args, a_params.argCount);
+
+		// new part of the function
+		RE::GFxValue selectedEntry;
+		a_params.thisPtr->Invoke("__get__selectedEntry", &selectedEntry);
+		RE::GFxValue text;
+		selectedEntry.GetMember("text", &text);
+		const auto textStr = std::string(text.GetString());
+		const auto where = topicDisplayData->find(textStr);
+		if (where == topicDisplayData->end())
+			return;
+		
+		const auto& displayData = where->second;
+		RE::GFxValue subtitle(displayData.subtitle);
+		dialogueMenu.Invoke("ShowDialogueText", nullptr, &subtitle, RE::UPInt(1));
 	}
 }

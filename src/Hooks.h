@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Scaleform.h"
+
 namespace Hooks
 {
 	void Install() noexcept;
@@ -23,7 +25,7 @@ namespace Hooks
 			kNone,
 		};
 
-		struct SpeechCheckData
+		struct SpeechCheckData final
 		{
 			std::string mainText;
 			std::string tagText;
@@ -31,16 +33,16 @@ namespace Hooks
 			SPEECH_CHECK_TYPE checkType;
 			bool passesCheck;
 			float requiredSpeechLevel;  // only applicable for persuasion (bribes and intimidation are more complicated: https://en.uesp.net/wiki/Skyrim:Speech#Bribe_Formula)
+			std::string predictedResponseText;
 		};
 
-		// the ActionScript 2 code of the dialogue menu only has access to the text of the topics, so the topics that should be colored are stored
-		static inline std::set<std::string> successTopics;
-		static inline std::set<std::string> failureTopics;
-		static inline std::set<std::string> noCheckTopics;
+		static inline std::unordered_map<std::string, Scaleform::TopicDisplayData> topicDisplayData;
 
 		static void processTopic(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 
 		static SpeechCheckData getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
+		static std::string applyFormat(const std::string& a_format, const SpeechCheckData* a_speechCheckData, const std::string& a_resultText) noexcept;
+
 		static void hydrateTextData(SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 		static void hydrateCheckData(SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept;
 

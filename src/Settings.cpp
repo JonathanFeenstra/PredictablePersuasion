@@ -30,16 +30,37 @@ void Settings::Load()
 	ini.SetSpaces();
 	ini.LoadFile(R"(.\Data\SKSE\Plugins\PredictablePersuasion.ini)");
 
-	// [Formats]
-	applyFormatting = ini.GetBoolValue("Formats", "bApplyFormatting", true);
-	persuadeFormat = ini.GetValue("Formats", "sPersuadeFormat", "{0} ({1} Level {3}");
-	intimidateFormat = ini.GetValue("Formats", "sIntimidateFormat", "{0} ({1})");
-	bribeFormat = ini.GetValue("Formats", "sBribeFormat", "{0} (Bribe with {1})");
+	// [TopicFormats]
+	applyTopicFormatting = ini.GetBoolValue("TopicFormats", "bApplyTopicFormatting", true);
+	persuadeTopicFormat = ini.GetValue("TopicFormats", "sPersuadeTopicFormat", "{0} ({1} Level {3}");
+	intimidateTopicFormat = ini.GetValue("TopicFormats", "sIntimidateTopicFormat", "{0} ({1})");
+	bribeTopicFormat = ini.GetValue("TopicFormats", "sBribeTopicFormat", "{0} (Bribe with {1})");
+
+	// [Subtitles]
+	const auto showSubtitlesValue = ini.GetLongValue("Subtitles", "uShowSubtitles", 1);
+	switch (showSubtitlesValue) {
+	case 0:
+		showSubtitles = SHOW_SUBTITLES::kNever;
+		break;
+	case 1:
+		showSubtitles = SHOW_SUBTITLES::kOnlyForNoCheck;
+		break;
+	case 2:
+		showSubtitles = SHOW_SUBTITLES::kForAllSpeechChecks;
+		break;
+	default:
+		showSubtitles = SHOW_SUBTITLES::kOnlyForNoCheck;
+		logger::error("Invalid value for uShowSubtitles: {}", showSubtitlesValue);
+	}
+
+	persuadeSubtitleFormat = ini.GetValue("Subtitles", "sPersuadeSubtitleFormat", "{4}");
+	intimidateSubtitleFormat = ini.GetValue("Subtitles", "sIntimidateSubtitleFormat", "{4}");
+	bribeSubtitleFormat = ini.GetValue("Subtitles", "sBribeSubtitleFormat", "{4}");
 
 	// [CheckResults]
-	checkSuccessString = ini.GetValue("CheckResults", "sSuccess", "Success");
-	checkFailureString = ini.GetValue("CheckResults", "sFailure", "Failure");
-	noCheckString = ini.GetValue("CheckResults", "sNoCheck", "No Check");
+	checkSuccessText = ini.GetValue("CheckResults", "sSuccessText", "Success");
+	checkFailureText = ini.GetValue("CheckResults", "sFailureText", "Failure");
+	noCheckText = ini.GetValue("CheckResults", "sNoCheckText", "No Check");
 
 	// [TagRegex]
 	try {
@@ -53,13 +74,13 @@ void Settings::Load()
 		logger::error("Failed to compile regex: {}", e.what());
 	}
 
-	// [TextColors]
-	applyTextColors = ini.GetBoolValue("TextColors", "bApplyTextColors", true);
-	successColor = ini.GetLongValue("TextColors", "uSuccessColor", 0x00FF00);
-	failureColorNew = ini.GetLongValue("TextColors", "uFailureColorNew", 0xFF0000);
-	failureColorOld = ini.GetLongValue("TextColors", "uFailureColorOld", 0x600000);
-	noCheckColorNew = ini.GetLongValue("TextColors", "uNoCheckColorNew", 0xFFFF00);
-	noCheckColorOld = ini.GetLongValue("TextColors", "uNoCheckColorOld", 0x606000);
-	regularColorNew = ini.GetLongValue("TextColors", "uRegularColorNew", 0xFFFFFF);
-	regularColorOld = ini.GetLongValue("TextColors", "uRegularColorOld", 0x606060);
+	// [TopicColors]
+	applyTopicColors = ini.GetBoolValue("TopicColors", "bApplyTopicColors", true);
+	successColor = ini.GetLongValue("TopicColors", "uSuccessColor", 0x00FF00);
+	failureColorNew = ini.GetLongValue("TopicColors", "uFailureColorNew", 0xFF0000);
+	failureColorOld = ini.GetLongValue("TopicColors", "uFailureColorOld", 0x600000);
+	noCheckColorNew = ini.GetLongValue("TopicColors", "uNoCheckColorNew", 0xFFFF00);
+	noCheckColorOld = ini.GetLongValue("TopicColors", "uNoCheckColorOld", 0x606000);
+	regularColorNew = ini.GetLongValue("TopicColors", "uRegularColorNew", 0xFFFFFF);
+	regularColorOld = ini.GetLongValue("TopicColors", "uRegularColorOld", 0x606060);
 }

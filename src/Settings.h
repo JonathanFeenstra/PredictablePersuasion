@@ -5,24 +5,37 @@ class Settings final
 public:
 	static void Load();
 
-	// [Formats]
-	static inline bool applyFormatting;
-	static inline std::string persuadeFormat;
-	static inline std::string intimidateFormat;
-	static inline std::string bribeFormat;
+	// [TopicFormats]
+	static inline bool applyTopicFormatting;
+	static inline std::string persuadeTopicFormat;
+	static inline std::string intimidateTopicFormat;
+	static inline std::string bribeTopicFormat;
+
+	// [Subtitles]
+	enum class SHOW_SUBTITLES : uint8_t
+	{
+		kNever = 0,
+		kOnlyForNoCheck = 1,
+		kForAllSpeechChecks = 2,
+	};
+
+	static inline SHOW_SUBTITLES showSubtitles;
+	static inline std::string persuadeSubtitleFormat;
+	static inline std::string intimidateSubtitleFormat;
+	static inline std::string bribeSubtitleFormat;
 
 	// [CheckResults]
-	static inline std::string checkSuccessString;
-	static inline std::string checkFailureString;
-	static inline std::string noCheckString;
+	static inline std::string checkSuccessText;
+	static inline std::string checkFailureText;
+	static inline std::string noCheckText;
 
 	// [TagRegex]
 	static inline std::regex persuadeTagRegex;
 	static inline std::regex intimidateTagRegex;
 	static inline std::regex bribeTagRegex;
 
-	// [TextColors]
-	static inline bool applyTextColors;
+	// [TopicColors]
+	static inline bool applyTopicColors;
 	static inline std::uint32_t successColor;
 	static inline std::uint32_t failureColorNew;
 	static inline std::uint32_t failureColorOld;

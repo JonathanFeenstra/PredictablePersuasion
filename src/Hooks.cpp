@@ -34,8 +34,8 @@ namespace Hooks
 	{
 		REL::Relocation<uintptr_t> vtbl(RE::VTABLE_DialogueMenu[0]);
 		_ProcessMessageFn = vtbl.write_vfunc(0x4, &ProcessMessageEx);
-		if (Settings::applyTextColors) {
-			Events::MenuOpenCloseEventSink::Install(&successTopics, &failureTopics, &noCheckTopics);
+		if (Settings::applyTopicColors || Settings::showSubtitles != Settings::SHOW_SUBTITLES::kNever) {
+			Events::MenuOpenCloseEventSink::Install(&topicDisplayData);
 		}
 	}
 
@@ -63,9 +63,8 @@ namespace Hooks
 			break;
 		case RE::UI_MESSAGE_TYPE::kHide:
 			cache.clear();
-			if (Settings::applyTextColors) {
-				successTopics.clear();
-				failureTopics.clear();
+			if (Settings::applyTopicColors || Settings::showSubtitles != Settings::SHOW_SUBTITLES::kNever) {
+				topicDisplayData.clear();
 			}
 			break;
 		}
@@ -76,49 +75,77 @@ namespace Hooks
 	void DialogueMenuEx::processTopic(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
 	{
 		const auto speechCheckData = getSpeechCheckData(a_dialogue);
-		SPEECH_CHECK_TYPE checkType;
-		std::set<std::string>* resultSet;
+		SPEECH_CHECK_TYPE impliedCheckType;
+		Scaleform::TopicDisplayData displayData;
 		std::string resultText;
-		if (speechCheckData.checkType == SPEECH_CHECK_TYPE::kNone) {
-			resultSet = &noCheckTopics;
-			resultText = Settings::noCheckString;
-			checkType = speechCheckData.tagType;
-		} else {
-			checkType = speechCheckData.checkType;
+
+		if (speechCheckData.checkType != SPEECH_CHECK_TYPE::kNone) {
+			impliedCheckType = speechCheckData.checkType;
 			if (speechCheckData.passesCheck) {
-				resultSet = &successTopics;
-				resultText = Settings::checkSuccessString;
+				resultText = Settings::checkSuccessText;
+				displayData.newColor = Settings::successColor;
+				displayData.oldColor = Settings::successColor;
 			} else {
-				resultSet = &failureTopics;
-				resultText = Settings::checkFailureString;
+				resultText = Settings::checkFailureText;
+				displayData.newColor = Settings::failureColorNew;
+				displayData.oldColor = Settings::failureColorOld;
 			}
-		}
-		
-		if (Settings::applyFormatting) {
-			switch (checkType) {
-			case SPEECH_CHECK_TYPE::kNone:
-				return;  // neither the tag nor the response conditions indicate a speech check, so a regular topic is assumed
-			case SPEECH_CHECK_TYPE::kPersuade:
-				a_dialogue->topicText = std::vformat(Settings::persuadeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText, speechCheckData.requiredSpeechLevel));
-				break;
-			case SPEECH_CHECK_TYPE::kIntimidate:
-				a_dialogue->topicText = std::vformat(Settings::intimidateFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
-				break;
-			case SPEECH_CHECK_TYPE::kBribe:
-				a_dialogue->topicText = std::vformat(Settings::bribeFormat, std::make_format_args(speechCheckData.mainText, speechCheckData.tagText, resultText));
-				break;
+		} else if (speechCheckData.tagType != SPEECH_CHECK_TYPE::kNone) {
+			impliedCheckType = speechCheckData.tagType;
+			resultText = Settings::noCheckText;
+			displayData.newColor = Settings::noCheckColorNew;
+			displayData.oldColor = Settings::noCheckColorOld;
+		} else {
+			if (Settings::applyTopicColors) {
+				displayData.newColor = Settings::regularColorNew;
+				displayData.oldColor = Settings::regularColorOld;
+				topicDisplayData[a_dialogue->topicText.c_str()] = displayData;
 			}
+
+			return;  // regular topics don't need topic formatting or subtitles
 		}
 
-		if (Settings::applyTextColors)
-		{
-			resultSet->insert(a_dialogue->topicText.c_str());
+		if (Settings::applyTopicFormatting) {
+			std::string topicFormat;
+			switch (impliedCheckType) {
+			case SPEECH_CHECK_TYPE::kPersuade:
+				topicFormat = Settings::persuadeTopicFormat;
+				break;
+			case SPEECH_CHECK_TYPE::kIntimidate:
+				topicFormat = Settings::intimidateTopicFormat;
+				break;
+			case SPEECH_CHECK_TYPE::kBribe:
+				topicFormat = Settings::bribeTopicFormat;
+				break;
+			}
+
+			a_dialogue->topicText = applyFormat(topicFormat, &speechCheckData, resultText);
+		}
+
+		if (Settings::showSubtitles == Settings::SHOW_SUBTITLES::kForAllSpeechChecks || (Settings::showSubtitles == Settings::SHOW_SUBTITLES::kOnlyForNoCheck && speechCheckData.checkType == SPEECH_CHECK_TYPE::kNone)) {
+			std::string subtitleFormat;
+			switch (impliedCheckType) {
+			case SPEECH_CHECK_TYPE::kPersuade:
+				subtitleFormat = Settings::persuadeSubtitleFormat;
+				break;
+			case SPEECH_CHECK_TYPE::kIntimidate:
+				subtitleFormat = Settings::intimidateSubtitleFormat;
+				break;
+			case SPEECH_CHECK_TYPE::kBribe:
+				subtitleFormat = Settings::bribeSubtitleFormat;
+				break;
+			}
+
+			displayData.subtitle = applyFormat(subtitleFormat, &speechCheckData, resultText);
+			topicDisplayData[a_dialogue->topicText.c_str()] = displayData;
+		} else if (Settings::applyTopicColors) {
+			topicDisplayData[a_dialogue->topicText.c_str()] = displayData;
 		}
 	}
 
 	DialogueMenuEx::SpeechCheckData DialogueMenuEx::getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
 	{
-		SpeechCheckData result{ {}, {}, SPEECH_CHECK_TYPE::kNone, SPEECH_CHECK_TYPE::kNone, false, 0.0F };
+		SpeechCheckData result{ {}, {}, SPEECH_CHECK_TYPE::kNone, SPEECH_CHECK_TYPE::kNone, false, 0.0F, "" };
 		const auto topic = a_dialogue->parentTopic;
 		if (!topic)
 			return result;
@@ -126,6 +153,18 @@ namespace Hooks
 		hydrateTextData(result, a_dialogue);
 		hydrateCheckData(result, topic);
 		return result;
+	}
+
+	std::string DialogueMenuEx::applyFormat(const std::string& a_format, const DialogueMenuEx::SpeechCheckData* a_speechCheckData, const std::string& a_resultText) noexcept
+	{
+		return std::vformat(
+			a_format,
+			std::make_format_args(
+				a_speechCheckData->mainText,
+				a_speechCheckData->tagText,
+				a_resultText,
+				a_speechCheckData->requiredSpeechLevel,
+				a_speechCheckData->predictedResponseText));
 	}
 
 	void DialogueMenuEx::hydrateTextData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
@@ -150,6 +189,8 @@ namespace Hooks
 
 	void DialogueMenuEx::hydrateCheckData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept
 	{
+		const auto speaker = RE::MenuTopicManager::GetSingleton()->speaker.get().get();
+		const auto player = RE::PlayerCharacter::GetSingleton();
 		// based on: https://github.com/Scrabx3/Dynamic-Dialogue-Replacer/blob/3ffe893f741a9e1530c9bcb5577465b6e9ccad0b/src/Hooks/Hooks.cpp#L96-L105
 		auto infoPtr = a_topic->topicInfos;
 		for (auto i = a_topic->numTopicInfos; i > 0; --i) {
@@ -157,8 +198,7 @@ namespace Hooks
 				return;
 			if (const auto responseInfo = *infoPtr) {
 				auto conditionItem = responseInfo->objConditions.head;
-
-				while (conditionItem) {
+				while (conditionItem && a_speechCheckData.checkType == SPEECH_CHECK_TYPE::kNone) {
 					const auto data = conditionItem->data;
 					const auto function = data.functionData.function;
 					// evaluating the full responseInfo.objConditions doesn't always return the correct result, so only evaluate the speech checks
@@ -168,18 +208,29 @@ namespace Hooks
 							a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kPersuade;
 							a_speechCheckData.requiredSpeechLevel = data.comparisonValue.g ? data.comparisonValue.g->value : data.comparisonValue.f;
 							a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, true);
-							return;
 						}
 					} else if (function == RE::FUNCTION_DATA::FunctionID::kGetBribeSuccess) {
 						a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kBribe;
 						a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, false);
-						return;
 					} else if (function == RE::FUNCTION_DATA::FunctionID::kGetIntimidateSuccess) {
 						a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kIntimidate;
 						a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, false);
-						return;
 					}
+
 					conditionItem = conditionItem->next;
+				}
+
+				if (a_speechCheckData.passesCheck || responseInfo->objConditions.IsTrue(speaker, player)) {
+					RE::NiPointer<RE::Actor> actor;
+					RE::RefHandle handle;
+					RE::CreateRefHandle(handle, speaker);
+					if (RE::LookupReferenceByHandle(handle, actor)) {
+						auto dialogueData = responseInfo->GetDialogueData(actor.get());
+						if (const auto response = dialogueData.responses.front()) {
+							a_speechCheckData.predictedResponseText = response->text.c_str();
+						}
+					}
+					return;
 				}
 			}
 			++infoPtr;
