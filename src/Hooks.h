@@ -47,5 +47,6 @@ namespace Hooks
 		static void hydrateCheckData(SpeechCheckData& a_speechCheckData, const RE::TESTopic* a_topic) noexcept;
 
 		static bool evaluateSpeechCheck(const RE::TESConditionItem* a_conditionItem, bool a_checkForAmuletOfArticulation) noexcept;
+		static std::string getResponseText(RE::TESTopicInfo* a_responseInfo, RE::TESObjectREFR* a_speaker) noexcept;
 	};
 }

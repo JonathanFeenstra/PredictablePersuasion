@@ -37,7 +37,7 @@ void Settings::Load()
 	bribeTopicFormat = ini.GetValue("TopicFormats", "sBribeTopicFormat", "{0} (Bribe with {1})");
 
 	// [Subtitles]
-	const auto showSubtitlesValue = ini.GetLongValue("Subtitles", "uShowSubtitles", 1);
+	const auto showSubtitlesValue = ini.GetLongValue("Subtitles", "uShowSubtitles", static_cast<long>(SHOW_SUBTITLES::kForAllSpeechChecks));
 	switch (showSubtitlesValue) {
 	case 0:
 		showSubtitles = SHOW_SUBTITLES::kNever;
@@ -49,10 +49,11 @@ void Settings::Load()
 		showSubtitles = SHOW_SUBTITLES::kForAllSpeechChecks;
 		break;
 	default:
-		showSubtitles = SHOW_SUBTITLES::kOnlyForNoCheck;
+		showSubtitles = SHOW_SUBTITLES::kForAllSpeechChecks;
 		logger::error("Invalid value for uShowSubtitles: {}", showSubtitlesValue);
 	}
 
+	subtitleColor = ini.GetLongValue("Subtitles", "uSubtitleColor", 0xA3A3A3);
 	persuadeSubtitleFormat = ini.GetValue("Subtitles", "sPersuadeSubtitleFormat", "{4}");
 	intimidateSubtitleFormat = ini.GetValue("Subtitles", "sIntimidateSubtitleFormat", "{4}");
 	bribeSubtitleFormat = ini.GetValue("Subtitles", "sBribeSubtitleFormat", "{4}");

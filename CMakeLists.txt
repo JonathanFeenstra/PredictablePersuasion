@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.29)
 project(
     PredictablePersuasion
     VERSION 1.0.0
-    DESCRIPTION "SKSE plugin for Skyrim Special Edition to display more info in persuasion/intimidation/bribe dialogue topics, such as the required speech level and the pre-calculated outcome (success or failure)."
+    DESCRIPTION "SKSE plugin for Skyrim Special Edition to display more info about persuasion/intimidation/bribe dialogue topics."
     LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

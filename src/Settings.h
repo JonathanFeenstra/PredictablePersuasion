@@ -20,6 +20,7 @@ public:
 	};
 
 	static inline SHOW_SUBTITLES showSubtitles;
+	static inline std::uint32_t subtitleColor;
 	static inline std::string persuadeSubtitleFormat;
 	static inline std::string intimidateSubtitleFormat;
 	static inline std::string bribeSubtitleFormat;

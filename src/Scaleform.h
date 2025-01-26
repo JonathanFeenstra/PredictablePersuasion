@@ -19,12 +19,26 @@ namespace Scaleform
 			const RE::DialogueMenu* a_dialogueMenu,
 			RE::GFxValue a_topicList,
 			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
+
 		void Call(Params& a_params) override;
 
 	private:
 		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
 
-		void colorText(RE::GFxValue& a_textField, bool a_topicIsNew) noexcept;
+		void colorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept;
+	};
+
+	class ShowDialogueTextFunctionHandler final : public RE::GFxFunctionHandler
+	{
+	public:
+		static void Install(const RE::DialogueMenu* a_dialogueMenu, RE::GFxValue a_dialogueMenu_mc, RE::GFxValue a_subtitleText) noexcept;
+
+		void Call(Params& a_params) override;
+
+	private:
+		RE::GFxValue dialogueMenu_mc;
+		RE::GFxValue subtitleText;
+		RE::GFxValue defaultSubtitleColor;
 	};
 
 	class DoSetSelectedIndexFunctionHandler final : public RE::GFxFunctionHandler
@@ -32,14 +46,18 @@ namespace Scaleform
 	public:
 		static void Install(
 			const RE::DialogueMenu* a_dialogueMenu,
+			RE::GFxValue a_dialogueMenu_mc,
+			RE::GFxValue a_subtitleText,
 			RE::GFxValue a_topicList,
 			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
+
 		void Call(Params& a_params) override;
 
 	private:
 		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
 
-		RE::GFxValue dialogueMenu;
+		RE::GFxValue dialogueMenu_mc;
+		RE::GFxValue subtitleText;
 		RE::GFxValue topicList;
 	};
 }

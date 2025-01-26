@@ -68,7 +68,7 @@ namespace Hooks
 			}
 			break;
 		}
-
+		
 		return _ProcessMessageFn(this, a_message);
 	}
 
@@ -198,10 +198,18 @@ namespace Hooks
 				return;
 			if (const auto responseInfo = *infoPtr) {
 				auto conditionItem = responseInfo->objConditions.head;
+				if (!conditionItem || (a_speechCheckData.checkType != SPEECH_CHECK_TYPE::kNone && i == 1)) {
+					// This response either has no conditions, or the speech check was found in a previous iteration, didn't pass, and the current response is the last option left.
+					// In the latter case, the conditions would actually still need to be evaluated to confirm this response would be chosen, but sometimes this returns false negatives.
+					// Therefore, the current response is the most likely one to be chosen based on the available information.
+					a_speechCheckData.predictedResponseText = getResponseText(responseInfo, speaker);
+					return;
+				}
+
 				while (conditionItem && a_speechCheckData.checkType == SPEECH_CHECK_TYPE::kNone) {
 					const auto data = conditionItem->data;
 					const auto function = data.functionData.function;
-					// evaluating the full responseInfo.objConditions doesn't always return the correct result, so only evaluate the speech checks
+					// evaluating the full responseInfo->objConditions sometimes returns false negatives, so only the speech checks are evaluated here.
 					if (function == RE::FUNCTION_DATA::FunctionID::kGetActorValue) {
 						const auto actorValue = static_cast<RE::ActorValue>(reinterpret_cast<intptr_t>(data.functionData.params[0]));
 						if (actorValue == RE::ActorValue::kSpeech && data.flags.opCode == RE::CONDITION_ITEM_DATA::OpCode::kGreaterThanOrEqualTo) {
@@ -221,15 +229,7 @@ namespace Hooks
 				}
 
 				if (a_speechCheckData.passesCheck || responseInfo->objConditions.IsTrue(speaker, player)) {
-					RE::NiPointer<RE::Actor> actor;
-					RE::RefHandle handle;
-					RE::CreateRefHandle(handle, speaker);
-					if (RE::LookupReferenceByHandle(handle, actor)) {
-						auto dialogueData = responseInfo->GetDialogueData(actor.get());
-						if (const auto response = dialogueData.responses.front()) {
-							a_speechCheckData.predictedResponseText = response->text.c_str();
-						}
-					}
+					a_speechCheckData.predictedResponseText = getResponseText(responseInfo, speaker);
 					return;
 				}
 			}
@@ -252,5 +252,20 @@ namespace Hooks
 		//const auto formToCheck = std::bit_cast<RE::TESForm*>(a_conditionItem->next->data.functionData.params[0]);
 		//const auto amuletOfArticulationFormList = RE::TESForm::LookupByEditorID("TGAmuletOfArticulationList");
 		return a_conditionItem->next->IsTrue(checkParams);
+	}
+
+	std::string DialogueMenuEx::getResponseText(RE::TESTopicInfo* a_responseInfo, RE::TESObjectREFR* a_speaker) noexcept
+	{
+		RE::NiPointer<RE::Actor> actor;
+		RE::RefHandle handle;
+		RE::CreateRefHandle(handle, a_speaker);
+		if (RE::LookupReferenceByHandle(handle, actor)) {
+			auto dialogueData = a_responseInfo->GetDialogueData(actor.get());
+			if (const auto response = dialogueData.responses.front()) {
+				return response->text.c_str();
+			}
+		}
+
+		return "";
 	}
 }
