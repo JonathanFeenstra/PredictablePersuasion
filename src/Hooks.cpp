@@ -105,6 +105,8 @@ namespace Hooks
 			return;  // regular topics don't need topic formatting or subtitles
 		}
 
+		const auto playerSpeechLevel = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner()->GetActorValue(RE::ActorValue::kSpeech);
+
 		if (Settings::applyTopicFormatting) {
 			std::string topicFormat;
 			switch (impliedCheckType) {
@@ -119,7 +121,7 @@ namespace Hooks
 				break;
 			}
 
-			a_dialogue->topicText = applyFormat(topicFormat, &speechCheckData, resultText);
+			a_dialogue->topicText = applyFormat(topicFormat, &speechCheckData, resultText, playerSpeechLevel);
 		}
 
 		if (Settings::showSubtitles == Settings::SHOW_SUBTITLES::kForAllSpeechChecks || (Settings::showSubtitles == Settings::SHOW_SUBTITLES::kOnlyForNoCheck && speechCheckData.checkType == SPEECH_CHECK_TYPE::kNone)) {
@@ -136,7 +138,7 @@ namespace Hooks
 				break;
 			}
 
-			displayData.subtitle = applyFormat(subtitleFormat, &speechCheckData, resultText);
+			displayData.subtitle = applyFormat(subtitleFormat, &speechCheckData, resultText, playerSpeechLevel);
 			topicDisplayData[a_dialogue->topicText.c_str()] = displayData;
 		} else if (Settings::applyTopicColors) {
 			topicDisplayData[a_dialogue->topicText.c_str()] = displayData;
@@ -155,7 +157,11 @@ namespace Hooks
 		return result;
 	}
 
-	std::string DialogueMenuEx::applyFormat(const std::string& a_format, const DialogueMenuEx::SpeechCheckData* a_speechCheckData, const std::string& a_resultText) noexcept
+	std::string DialogueMenuEx::applyFormat(
+		const std::string& a_format,
+		const DialogueMenuEx::SpeechCheckData* a_speechCheckData,
+		const std::string& a_resultText,
+		const float a_playerSpeechLevel) noexcept
 	{
 		return std::vformat(
 			a_format,
@@ -164,7 +170,8 @@ namespace Hooks
 				a_speechCheckData->tagText,
 				a_resultText,
 				a_speechCheckData->requiredSpeechLevel,
-				a_speechCheckData->predictedResponseText));
+				a_speechCheckData->predictedResponseText,
+				a_playerSpeechLevel));
 	}
 
 	void DialogueMenuEx::hydrateTextData(DialogueMenuEx::SpeechCheckData& a_speechCheckData, const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept
