@@ -68,7 +68,7 @@ namespace Hooks
 			}
 			break;
 		}
-		
+
 		return _ProcessMessageFn(this, a_message);
 	}
 
@@ -214,7 +214,7 @@ namespace Hooks
 						const auto actorValue = static_cast<RE::ActorValue>(reinterpret_cast<intptr_t>(data.functionData.params[0]));
 						if (actorValue == RE::ActorValue::kSpeech && data.flags.opCode == RE::CONDITION_ITEM_DATA::OpCode::kGreaterThanOrEqualTo) {
 							a_speechCheckData.checkType = SPEECH_CHECK_TYPE::kPersuade;
-							a_speechCheckData.requiredSpeechLevel = data.comparisonValue.g ? data.comparisonValue.g->value : data.comparisonValue.f;
+							a_speechCheckData.requiredSpeechLevel = data.flags.global ? data.comparisonValue.g->value : data.comparisonValue.f;
 							a_speechCheckData.passesCheck = evaluateSpeechCheck(conditionItem, true);
 						}
 					} else if (function == RE::FUNCTION_DATA::FunctionID::kGetBribeSuccess) {
@@ -228,7 +228,7 @@ namespace Hooks
 					conditionItem = conditionItem->next;
 				}
 
-				if (a_speechCheckData.passesCheck || responseInfo->objConditions.IsTrue(speaker, player)) {
+				if (a_speechCheckData.passesCheck || (a_speechCheckData.checkType != SPEECH_CHECK_TYPE::kNone && responseInfo->objConditions.IsTrue(speaker, player))) {
 					a_speechCheckData.predictedResponseText = getResponseText(responseInfo, speaker);
 					return;
 				}
@@ -261,7 +261,8 @@ namespace Hooks
 		RE::CreateRefHandle(handle, a_speaker);
 		if (RE::LookupReferenceByHandle(handle, actor)) {
 			auto dialogueData = a_responseInfo->GetDialogueData(actor.get());
-			if (const auto response = dialogueData.responses.front()) {
+			if (!dialogueData.responses.empty()) {
+				const auto response = dialogueData.responses.front();
 				return response->text.c_str();
 			}
 		}
