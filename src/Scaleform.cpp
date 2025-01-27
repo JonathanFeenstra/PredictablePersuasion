@@ -73,9 +73,13 @@ namespace Scaleform
 		auto handler = RE::make_gptr<Scaleform::SetEntryTextFunctionHandler>();
 		handler->topicDisplayData = a_topicDisplayData;
 
-		RE::GFxValue setEntryText;
-		a_dialogueMenu->uiMovie->CreateFunction(&setEntryText, handler.get());
-		a_topicList.SetMember("SetEntryText", setEntryText);
+		RE::GFxValue setEntryTextOriginal;
+		a_topicList.GetMember("SetEntryText", &setEntryTextOriginal);
+		a_topicList.SetMember("SetEntryTextOriginal", setEntryTextOriginal);
+
+		RE::GFxValue setEntryTextNew;
+		a_dialogueMenu->uiMovie->CreateFunction(&setEntryTextNew, handler.get());
+		a_topicList.SetMember("SetEntryText", setEntryTextNew);
 	}
 
 	// replaces: https://github.com/Mardoxx/skyrimui/blob/425aa8a31de31fb11fe78ee6cec799f4ba31af03/src/dialoguemenu/DialogueCenteredList.as#L23-L29
@@ -90,33 +94,13 @@ namespace Scaleform
 		auto& aEntryClip = a_params.args[0];
 		auto& aEntryObject = a_params.args[1];
 
-		// custom implementation of BSScrollingList.SetEntryText
+		thisPtr->Invoke("SetEntryTextOriginal", nullptr, a_params.args, a_params.argCount);
+
+		// new part of the function
 		RE::GFxValue textField;
 		if (!aEntryClip.GetMember("textField", &textField) || textField.IsUndefined())
 			return;
 
-		RE::GFxValue textOption;
-		thisPtr->Invoke("__get__textOption", &textOption);
-		switch (textOption.GetUInt()) {
-		case 1:
-			// Shared.BSScrollingList.TEXT_OPTION_SHRINK_TO_FIT
-			textField.SetMember("textAutoSize", RE::GFxValue("shrink"));
-			break;
-		case 2:
-			// Shared.BSScrollingList.TEXT_OPTION_MULTILINE
-			textField.SetMember("verticalAutoSize", RE::GFxValue("top"));
-			break;
-		}
-
-		RE::GFxValue text;
-		if (!aEntryObject.GetMember("text", &text) || text.IsUndefined()) {
-			RE::GFxValue arg = RE::GFxValue(" ");
-			textField.Invoke("SetText", nullptr, &arg, RE::UPInt(1));
-		} else {
-			textField.Invoke("SetText", nullptr, &text, RE::UPInt(1));
-		}
-
-		// the rest of the original function is replaced by custom logic to determine the text color
 		RE::GFxValue topicIsNew;
 		const auto newTopic = !aEntryObject.GetMember("topicIsNew", &topicIsNew) || topicIsNew.GetBool();
 		colorText(textField, newTopic);
