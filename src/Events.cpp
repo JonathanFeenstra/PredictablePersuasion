@@ -41,7 +41,7 @@ namespace Events
 	RE::BSEventNotifyControl MenuOpenCloseEventSink::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 	{
 		if (a_event->menuName == RE::DialogueMenu::MENU_NAME && a_event->opening) {
-			Scaleform::InstallHooks(topicDisplayData);
+			Scaleform::DialogueMenuUI::InstallHooks(topicDisplayData);
 		}
 		return RE::BSEventNotifyControl::kContinue;
 	}
