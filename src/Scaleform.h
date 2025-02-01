@@ -8,12 +8,14 @@ namespace Scaleform
 		std::uint32_t oldColor;
 		std::uint32_t newColor;
 		std::string subtitle;
-	};	
+	};
+
+	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
 	class DialogueMenuUI final
 	{
 	public:
-		static void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
+		static void Install(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 		static DialogueMenuUI* GetSingleton() noexcept;
 
 		void CopyOriginalTopicListFunction(const char* a_functionName) noexcept;
@@ -23,27 +25,27 @@ namespace Scaleform
 		void ColorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept;
 
 		bool IsTopicListShown() noexcept;
+		bool UsesBetterDialogueControls() noexcept;
 
 		void ShowGameSubtitle(const RE::GFxValue a_strText) noexcept;
 		void ShowModSubtitle() noexcept;
 
 		DialogueMenuUI(const DialogueMenuUI&) = delete;
 		DialogueMenuUI(DialogueMenuUI&&) = delete;
-		DialogueMenuUI& operator=(const DialogueMenuUI&) = delete;
-		DialogueMenuUI& operator=(DialogueMenuUI&&) = delete;
+		void operator=(const DialogueMenuUI&) = delete;
+		void operator=(DialogueMenuUI&&) = delete;
 
 	private:
 		DialogueMenuUI() {};
 
+		RE::DialogueMenu* getDialogueMenu() noexcept;
+		RE::GFxValue getDialogueMenu_mc() noexcept;
+		RE::GFxValue getTopicList() noexcept;
+		RE::GFxValue getSubtitleText() noexcept;
 		RE::GFxValue getHiglightedEntry() noexcept;
 
 		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
-		RE::GPtr<RE::GFxMovieView> dialogueMenuUIMovie;
-		RE::GFxValue dialogueMenu_mc;
-		RE::GFxValue subtitleText;
-		RE::GFxValue defaultSubtitleColor;
-		RE::GFxValue topicList;
-		bool usesBetterDialogueControls;
+		std::uint32_t defaultSubtitleColor;
 		bool isGameSubtitle;
 	};
 
@@ -84,6 +86,7 @@ namespace Scaleform
 	{
 	public:
 		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+
 		void Call(Params& a_params) override;
 
 	private:
@@ -94,6 +97,7 @@ namespace Scaleform
 	{
 	public:
 		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+
 		void Call(Params& a_params) override;
 
 	private:

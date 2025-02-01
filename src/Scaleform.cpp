@@ -23,56 +23,23 @@ See EXCEPTIONS for additional permissions.
 
 namespace Scaleform
 {
-	void DialogueMenuUI::InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
 	{
-		const auto singleton = GetSingleton();
-		singleton->topicDisplayData = a_topicDisplayData;
-
-		const auto ui = RE::UI::GetSingleton();
-		if (!ui) {
-			logger::error("Failed to get UI");
-			return;
-		}
-		const auto dialogueMenu = ui->GetMenu<RE::DialogueMenu>().get();
-		if (!dialogueMenu) {
-			logger::error("Failed to get DialogueMenu");
-			return;
-		}
-
-		singleton->dialogueMenuUIMovie = dialogueMenu->uiMovie;
-
-		if (!dialogueMenu->uiMovie->GetVariable(&singleton->topicList, "_root.DialogueMenu_mc.TopicListHolder.List_mc")) {
-			logger::error("Failed to get TopicList");
-			return;
-		}
-
-		if (!dialogueMenu->uiMovie->GetVariable(&singleton->dialogueMenu_mc, "_root.DialogueMenu_mc")) {
-			logger::error("Failed to get DialogueMenu_mc");
-			return;
-		}
+		DialogueMenuUI::Install(a_topicDisplayData);
+		const auto dialogueMenuUI = DialogueMenuUI::GetSingleton();
 
 		if (Settings::applyTopicColors) {
-			SetEntryTextFunctionHandler::Install(singleton);
+			SetEntryTextFunctionHandler::Install(dialogueMenuUI);
 		}
+
 		if (Settings::showSubtitles != Settings::SHOW_SUBTITLES::kNever) {
-			if (!singleton->dialogueMenu_mc.GetMember("SubtitleText", &singleton->subtitleText)) {
-				logger::error("Failed to get SubtitleText");
-				return;
-			}
-
-			if (!singleton->subtitleText.GetMember("textColor", &singleton->defaultSubtitleColor)) {
-				logger::error("Failed to get default subtitle color");
-				return;
-			}
-
-			ShowDialogueTextFunctionHandler::Install(singleton);
-			DoSetSelectedIndexFunctionHandler::Install(singleton);
-			if (singleton->topicList.HasMember("iHighlightedIndex")) {
+			ShowDialogueTextFunctionHandler::Install(dialogueMenuUI);
+			DoSetSelectedIndexFunctionHandler::Install(dialogueMenuUI);
+			if (dialogueMenuUI->UsesBetterDialogueControls()) {
 				// Better Dialogue Controls and mods based on it decouple mouse highlighting from the selected item:
 				// See: https://github.com/fabd/skyrimui/commit/e5f0d8d719acd2d2545357d4415882f54084d74d
-				singleton->usesBetterDialogueControls = true;
-				MoveSelectionUpFunctionHandler::Install(singleton);
-				MoveSelectionDownFunctionHandler::Install(singleton);
+				MoveSelectionUpFunctionHandler::Install(dialogueMenuUI);
+				MoveSelectionDownFunctionHandler::Install(dialogueMenuUI);
 			}
 		}
 	}
@@ -83,7 +50,23 @@ namespace Scaleform
 		return &singleton;
 	}
 
-	void DialogueMenuUI::CopyOriginalTopicListFunction(const char* a_functionName) noexcept {
+	void DialogueMenuUI::Install(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	{
+		const auto singleton = GetSingleton();
+		singleton->topicDisplayData = a_topicDisplayData;
+
+		RE::GFxValue subtitleColor;
+		if (!singleton->getSubtitleText().GetMember("textColor", &subtitleColor)) {
+			logger::error("Failed to get default subtitle color");
+			return;
+		}
+
+		singleton->defaultSubtitleColor = subtitleColor.GetNumber();
+	}
+
+	void DialogueMenuUI::CopyOriginalTopicListFunction(const char* a_functionName) noexcept
+	{
+		auto topicList = getTopicList();
 		RE::GFxValue originalFunction;
 		topicList.GetMember(a_functionName, &originalFunction);
 		const auto originalFunctionName = std::string(a_functionName) + "Original";
@@ -93,15 +76,15 @@ namespace Scaleform
 	void DialogueMenuUI::ReplaceFunction(const char* a_functionName, RE::GFxFunctionHandler* a_newHandler) noexcept
 	{
 		RE::GFxValue newFunction;
-		dialogueMenuUIMovie->CreateFunction(&newFunction, a_newHandler);
-		dialogueMenu_mc.SetMember(a_functionName, newFunction);
+		getDialogueMenu()->uiMovie->CreateFunction(&newFunction, a_newHandler);
+		getDialogueMenu_mc().SetMember(a_functionName, newFunction);
 	}
 
 	void DialogueMenuUI::ReplaceTopicListFunction(const char* a_functionName, RE::GFxFunctionHandler* a_newHandler) noexcept
 	{
 		RE::GFxValue newFunction;
-		dialogueMenuUIMovie->CreateFunction(&newFunction, a_newHandler);
-		topicList.SetMember(a_functionName, newFunction);
+		getDialogueMenu()->uiMovie->CreateFunction(&newFunction, a_newHandler);
+		getTopicList().SetMember(a_functionName, newFunction);
 	}
 
 	void DialogueMenuUI::ColorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept
@@ -120,13 +103,19 @@ namespace Scaleform
 	bool DialogueMenuUI::IsTopicListShown() noexcept
 	{
 		RE::GFxValue eMenuState;
-		if (!dialogueMenu_mc.GetMember("eMenuState", &eMenuState))
+		if (!getDialogueMenu_mc().GetMember("eMenuState", &eMenuState))
 			return false;
 		return eMenuState.GetNumber() == 1;  // eMenuState == TOPIC_LIST_SHOWN
 	}
 
+	bool DialogueMenuUI::UsesBetterDialogueControls() noexcept
+	{
+		return getDialogueMenu_mc().HasMember("iHighlightedIndex");
+	}
+
 	void DialogueMenuUI::ShowGameSubtitle(const RE::GFxValue a_strText) noexcept
 	{
+		auto subtitleText = getSubtitleText();
 		subtitleText.SetMember("textColor", defaultSubtitleColor);
 		subtitleText.Invoke("SetText", nullptr, &a_strText, RE::UPInt(1));
 		isGameSubtitle = true;
@@ -144,11 +133,11 @@ namespace Scaleform
 		if (where == topicDisplayData->end())
 			return;
 
+		auto subtitleText = getSubtitleText();
 		const auto& displayData = where->second;
 		if (displayData.subtitle.empty()) {
 			// prevent hiding real subtitles by overwriting them with empty strings
-			RE::GFxValue isRealSubtitle;
-			if (dialogueMenu_mc.GetMember("bIsRealSubtitle", &isRealSubtitle) && isRealSubtitle.GetBool()) {
+			if (!isGameSubtitle) {
 				RE::GFxValue currentSubtitle;
 				if (subtitleText.GetMember("text", &currentSubtitle)) {
 					std::string currentSubtitleStr(currentSubtitle.GetString());
@@ -165,15 +154,60 @@ namespace Scaleform
 		isGameSubtitle = false;
 	}
 
+	RE::DialogueMenu* DialogueMenuUI::getDialogueMenu() noexcept
+	{
+		const auto ui = RE::UI::GetSingleton();
+		if (!ui) {
+			logger::error("Failed to get UI");
+		}
+
+		const auto dialogueMenu = ui->GetMenu<RE::DialogueMenu>().get();
+		if (!dialogueMenu) {
+			logger::error("Failed to get DialogueMenu");
+		}
+
+		return dialogueMenu;
+	}
+
+	RE::GFxValue DialogueMenuUI::getDialogueMenu_mc() noexcept
+	{
+		RE::GFxValue dialogueMenu_mc;
+		if (!getDialogueMenu()->uiMovie->GetVariable(&dialogueMenu_mc, "_root.DialogueMenu_mc")) {
+			logger::error("Failed to get DialogueMenu_mc");
+		}
+
+		return dialogueMenu_mc;
+	}
+
+	RE::GFxValue DialogueMenuUI::getTopicList() noexcept
+	{
+		RE::GFxValue topicList;
+		if (!getDialogueMenu()->uiMovie->GetVariable(&topicList, "_root.DialogueMenu_mc.TopicListHolder.List_mc")) {
+			logger::error("Failed to get TopicList");
+		}
+
+		return topicList;
+	}
+
+	RE::GFxValue DialogueMenuUI::getSubtitleText() noexcept
+	{
+		RE::GFxValue subtitleText;
+		if (!getDialogueMenu_mc().GetMember("SubtitleText", &subtitleText)) {
+			logger::error("Failed to get SubtitleText");
+		}
+
+		return subtitleText;
+	}
+	
 	RE::GFxValue DialogueMenuUI::getHiglightedEntry() noexcept
 	{
+		auto topicList = getTopicList();
 		RE::GFxValue highlightedEntry;
-		if (usesBetterDialogueControls) {
-			topicList.GetMember("EntriesA", &highlightedEntry);
-			RE::GFxValue iHighlightedIndex;
-			if (topicList.GetMember("iHighlightedIndex", &iHighlightedIndex) && iHighlightedIndex.GetNumber() != -1) {
-				highlightedEntry.GetElement(iHighlightedIndex.GetNumber(), &highlightedEntry);
-			}
+		RE::GFxValue iHighlightedIndex;
+		if (topicList.GetMember("iHighlightedIndex", &iHighlightedIndex) && iHighlightedIndex.GetNumber() != -1) {
+			RE::GFxValue entriesA;
+			topicList.GetMember("EntriesA", &entriesA);
+			entriesA.GetElement(iHighlightedIndex.GetNumber(), &highlightedEntry);
 		} else {
 			topicList.Invoke("__get__selectedEntry", &highlightedEntry);
 		}
@@ -268,7 +302,7 @@ namespace Scaleform
 	void MoveSelectionUpFunctionHandler::Call(Params& a_params)
 	{
 		a_params.thisPtr->Invoke("moveSelectionUpOriginal", nullptr, a_params.args, a_params.argCount);
-		
+
 		// new part of the function
 		if (!dialogueMenuUI->IsTopicListShown())
 			return;
