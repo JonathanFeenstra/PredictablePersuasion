@@ -84,4 +84,8 @@ void Settings::Load()
 	noCheckColorOld = ini.GetLongValue("TopicColors", "uNoCheckColorOld", 0x606000);
 	regularColorNew = ini.GetLongValue("TopicColors", "uRegularColorNew", 0xFFFFFF);
 	regularColorOld = ini.GetLongValue("TopicColors", "uRegularColorOld", 0x606060);
+
+	// [Requirements]
+	requirePerk = ini.GetBoolValue("Requirements", "bRequirePerk", false);
+	requiredPerkFormID = ini.GetLongValue("Requirements", "uRequiredPerkFormID", 0x001090A2);
 }

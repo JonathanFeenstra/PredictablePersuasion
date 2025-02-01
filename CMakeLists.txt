@@ -21,6 +21,7 @@ configure_file(
 set(headers
         src/Events.h
         src/Hooks.h
+        src/Requirements.h
         src/Scaleform.h
         src/Settings.h
         src/StringUtil.h)
@@ -29,6 +30,7 @@ set(sources
         src/Events.cpp
         src/Hooks.cpp
         src/Main.cpp
+        src/Requirements.cpp
         src/Scaleform.cpp
         src/Settings.cpp
         src/StringUtil.cpp

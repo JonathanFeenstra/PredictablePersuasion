@@ -19,6 +19,7 @@ See EXCEPTIONS for additional permissions.
 
 #include "Events.h"
 
+#include "Requirements.h"
 #include "Scaleform.h"
 
 namespace Events
@@ -40,7 +41,7 @@ namespace Events
 
 	RE::BSEventNotifyControl MenuOpenCloseEventSink::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 	{
-		if (a_event->menuName == RE::DialogueMenu::MENU_NAME && a_event->opening) {
+		if (a_event->menuName == RE::DialogueMenu::MENU_NAME && a_event->opening && Requirements::AreRequirementsMet()) {
 			Scaleform::DialogueMenuUI::InstallHooks(topicDisplayData);
 		}
 		return RE::BSEventNotifyControl::kContinue;

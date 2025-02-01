@@ -45,6 +45,10 @@ public:
 	static inline std::uint32_t regularColorNew;
 	static inline std::uint32_t regularColorOld;
 
+	// [Requirements]
+	static inline bool requirePerk;
+	static inline std::uint32_t requiredPerkFormID;
+
 	// Prevent instantiation
 	Settings() = default;
 	Settings(const Settings&) = delete;

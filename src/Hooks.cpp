@@ -20,6 +20,7 @@ See EXCEPTIONS for additional permissions.
 #include "Hooks.h"
 
 #include "Events.h"
+#include "Requirements.h"
 #include "Settings.h"
 #include "StringUtil.h"
 
@@ -41,6 +42,10 @@ namespace Hooks
 
 	RE::UI_MESSAGE_RESULTS DialogueMenuEx::ProcessMessageEx(RE::UIMessage& a_message) noexcept
 	{
+		if (!Requirements::AreRequirementsMet()) {
+			return _ProcessMessageFn(this, a_message);
+		}
+
 		static std::unordered_map<RE::FormID, std::string> cache;
 		switch (*a_message.type) {
 		case RE::UI_MESSAGE_TYPE::kShow:
