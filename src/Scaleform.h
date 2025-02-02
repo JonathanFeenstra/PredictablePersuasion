@@ -12,95 +12,102 @@ namespace Scaleform
 
 	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
-	class DialogueMenuUI final
-	{
-	public:
-		static void Install(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
-		static DialogueMenuUI* GetSingleton() noexcept;
+	void ShowModSubtitle(
+		RE::GFxValue a_dialogueMenu_mc,
+		RE::GFxValue a_topicList,
+		RE::GFxValue a_subtitleText,
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
-		void CopyOriginalTopicListFunction(const char* a_functionName) noexcept;
-		void ReplaceFunction(const char* a_functionName, RE::GFxFunctionHandler* a_newHandler) noexcept;
-		void ReplaceTopicListFunction(const char* a_functionName, RE::GFxFunctionHandler* a_newHandler) noexcept;
-
-		void ColorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept;
-
-		bool IsTopicListShown() noexcept;
-		bool UsesBetterDialogueControls() noexcept;
-
-		void ShowGameSubtitle(const RE::GFxValue a_strText) noexcept;
-		void ShowModSubtitle() noexcept;
-
-		DialogueMenuUI(const DialogueMenuUI&) = delete;
-		DialogueMenuUI(DialogueMenuUI&&) = delete;
-		void operator=(const DialogueMenuUI&) = delete;
-		void operator=(DialogueMenuUI&&) = delete;
-
-	private:
-		DialogueMenuUI() {};
-
-		RE::DialogueMenu* getDialogueMenu() noexcept;
-		RE::GFxValue getDialogueMenu_mc() noexcept;
-		RE::GFxValue getTopicList() noexcept;
-		RE::GFxValue getSubtitleText() noexcept;
-		RE::GFxValue getHiglightedEntry() noexcept;
-
-		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
-		std::uint32_t defaultSubtitleColor;
-		bool isGameSubtitle;
-	};
+	bool IsTopicListShown(RE::GFxValue a_dialogueMenu_mc) noexcept;
+	RE::GFxValue GetHiglightedEntry(RE::GFxValue a_topicList) noexcept;
 
 	class SetEntryTextFunctionHandler final : public RE::GFxFunctionHandler
 	{
 	public:
-		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+		static void Install(
+			const RE::DialogueMenu* a_dialogueMenu,
+			RE::GFxValue a_topicList,
+			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
 		void Call(Params& a_params) override;
 
 	private:
-		DialogueMenuUI* dialogueMenuUI;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+
+		void colorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept;
 	};
 
 	class ShowDialogueTextFunctionHandler final : public RE::GFxFunctionHandler
 	{
 	public:
-		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+		static void Install(const RE::DialogueMenu* a_dialogueMenu, RE::GFxValue a_dialogueMenu_mc, RE::GFxValue a_subtitleText) noexcept;
 
 		void Call(Params& a_params) override;
 
 	private:
-		DialogueMenuUI* dialogueMenuUI;
+		RE::GFxValue dialogueMenu_mc;
+		RE::GFxValue subtitleText;
+		RE::GFxValue defaultSubtitleColor;
 	};
 
 	class DoSetSelectedIndexFunctionHandler final : public RE::GFxFunctionHandler
 	{
 	public:
-		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+		static void Install(
+			const RE::DialogueMenu* a_dialogueMenu,
+			RE::GFxValue a_dialogueMenu_mc,
+			RE::GFxValue a_subtitleText,
+			RE::GFxValue a_topicList,
+			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
 		void Call(Params& a_params) override;
 
 	private:
-		DialogueMenuUI* dialogueMenuUI;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+
+		RE::GFxValue dialogueMenu_mc;
+		RE::GFxValue subtitleText;
+		RE::GFxValue topicList;
 	};
 
+	
 	class MoveSelectionUpFunctionHandler final : public RE::GFxFunctionHandler
 	{
 	public:
-		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+		static void Install(
+			const RE::DialogueMenu* a_dialogueMenu,
+			RE::GFxValue a_dialogueMenu_mc,
+			RE::GFxValue a_subtitleText,
+			RE::GFxValue a_topicList,
+			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
 		void Call(Params& a_params) override;
 
 	private:
-		DialogueMenuUI* dialogueMenuUI;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+
+		RE::GFxValue dialogueMenu_mc;
+		RE::GFxValue subtitleText;
+		RE::GFxValue topicList;
 	};
 
 	class MoveSelectionDownFunctionHandler final : public RE::GFxFunctionHandler
 	{
 	public:
-		static void Install(DialogueMenuUI* a_dialogueMenuUI) noexcept;
+		static void Install(
+			const RE::DialogueMenu* a_dialogueMenu,
+			RE::GFxValue a_dialogueMenu_mc,
+			RE::GFxValue a_subtitleText,
+			RE::GFxValue a_topicList,
+			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
 		void Call(Params& a_params) override;
 
 	private:
-		DialogueMenuUI* dialogueMenuUI;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+
+		RE::GFxValue dialogueMenu_mc;
+		RE::GFxValue subtitleText;
+		RE::GFxValue topicList;
 	};
 }
