@@ -240,7 +240,7 @@ namespace Hooks
 					conditionItem = conditionItem->next;
 				}
 
-				if (a_speechCheckData.passesCheck || (a_speechCheckData.checkType != SPEECH_CHECK_TYPE::kNone && responseInfo->objConditions.IsTrue(speaker, player))) {
+				if (a_speechCheckData.passesCheck || ((a_speechCheckData.checkType != SPEECH_CHECK_TYPE::kNone || a_speechCheckData.tagType != SPEECH_CHECK_TYPE::kNone) && (i == 1 || responseInfo->objConditions.IsTrue(speaker, player)))) {
 					a_speechCheckData.predictedResponseText = getResponseText(responseInfo, speaker);
 					return;
 				}
