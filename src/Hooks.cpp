@@ -46,7 +46,7 @@ namespace Hooks
 			return _ProcessMessageFn(this, a_message);
 		}
 
-		static std::unordered_map<RE::FormID, std::string> cache;
+		static std::unordered_map<const cache_key_t, std::string, cache_key_hash> cache;
 		switch (*a_message.type) {
 		case RE::UI_MESSAGE_TYPE::kShow:
 		case RE::UI_MESSAGE_TYPE::kUpdate:
@@ -55,14 +55,16 @@ namespace Hooks
 					const auto dialogue = *it;
 					if (!dialogue)
 						continue;
-					const auto formID = dialogue->parentTopic->formID;
-					auto where = cache.find(formID);
+					const auto parentTopic = dialogue->parentTopic;
+					// topics can be reused with a different text (e.g. when selling multiple carcasses with Simple Hunting Overhaul)
+					const auto cacheKey = std::make_tuple(parentTopic->formID, parentTopic->GetFullName());
+					auto where = cache.find(cacheKey);
 					if (where != cache.end()) {
 						dialogue->topicText = where->second;
 						continue;
 					}
 					processTopic(dialogue);
-					cache[formID] = dialogue->topicText;
+					cache[cacheKey] = dialogue->topicText;
 				}
 			}
 			break;

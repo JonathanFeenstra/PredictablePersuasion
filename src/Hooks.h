@@ -17,6 +17,23 @@ namespace Hooks
 
 		static inline REL::Relocation<ProcessMessageFn> _ProcessMessageFn;
 
+		// https://stackoverflow.com/a/21439212
+		typedef std::tuple<RE::FormID, RE::BSString> cache_key_t;
+
+		struct cache_key_hash
+		{
+			size_t
+			operator()(cache_key_t const& key) const
+			{
+				size_t seed = 0;
+				const auto& formID = get<0>(key);
+				const auto& text = get<1>(key);
+				seed ^= std::hash<RE::FormID>()(formID) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				seed ^= std::hash<const char*>()(text.c_str()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				return seed;
+			}
+		};
+
 		enum class SPEECH_CHECK_TYPE
 		{
 			kPersuade,
