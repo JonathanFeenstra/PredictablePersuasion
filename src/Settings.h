@@ -35,6 +35,11 @@ public:
 	static inline std::regex intimidateTagRegex;
 	static inline std::regex bribeTagRegex;
 
+	// [TagPlaceholders]
+	static inline std::string persuadeTagPlaceholder;
+	static inline std::string intimidateTagPlaceholder;
+	static inline std::string bribeTagPlaceholder;
+
 	// [TopicColors]
 	static inline bool applyTopicColors;
 	static inline std::uint32_t successColor;

@@ -161,7 +161,25 @@ namespace Hooks
 
 		hydrateTextData(result, a_dialogue);
 		hydrateCheckData(result, topic);
+		if (result.tagType == SPEECH_CHECK_TYPE::kNone) {
+			applyTagPlaceholder(result);
+		}
 		return result;
+	}
+
+	void DialogueMenuEx::applyTagPlaceholder(Hooks::DialogueMenuEx::SpeechCheckData& result)
+	{
+		switch (result.checkType) {
+		case SPEECH_CHECK_TYPE::kPersuade:
+			result.tagText = Settings::persuadeTagPlaceholder;
+			break;
+		case SPEECH_CHECK_TYPE::kIntimidate:
+			result.tagText = Settings::intimidateTagPlaceholder;
+			break;
+		case SPEECH_CHECK_TYPE::kBribe:
+			result.tagText = Settings::bribeTagPlaceholder;
+			break;
+		}
 	}
 
 	std::string DialogueMenuEx::applyFormat(

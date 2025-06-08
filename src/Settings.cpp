@@ -75,6 +75,11 @@ void Settings::Load()
 		logger::error("Failed to compile regex: {}", e.what());
 	}
 
+	// [TagPlaceholders]
+	persuadeTagPlaceholder = ini.GetValue("TagPlaceholders", "sPersuadeTagPlaceholder", "Persuade");
+	intimidateTagPlaceholder = ini.GetValue("TagPlaceholders", "sIntimidateTagPlaceholder", "Intimidate");
+	bribeTagPlaceholder = ini.GetValue("TagPlaceholders", "sBribeTagPlaceholder", "gold");
+
 	// [TopicColors]
 	applyTopicColors = ini.GetBoolValue("TopicColors", "bApplyTopicColors", true);
 	successColor = ini.GetLongValue("TopicColors", "uSuccessColor", 0x00FF00);

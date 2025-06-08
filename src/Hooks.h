@@ -58,6 +58,7 @@ namespace Hooks
 		static void processTopic(RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
 
 		static SpeechCheckData getSpeechCheckData(const RE::MenuTopicManager::Dialogue* a_dialogue) noexcept;
+		static void applyTagPlaceholder(Hooks::DialogueMenuEx::SpeechCheckData& result);
 		static std::string applyFormat(
 			const std::string& a_format,
 			const SpeechCheckData* a_speechCheckData,
