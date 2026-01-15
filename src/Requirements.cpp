@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Jonathan Feenstra
+Copyright (C) 2025-2026 Jonathan Feenstra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,6 +20,11 @@ See EXCEPTIONS for additional permissions.
 #include "Requirements.h"
 
 #include "Settings.h"
+
+#include <RE/B/BGSPerk.h>
+#include <RE/P/PlayerCharacter.h>
+#include <RE/T/TESForm.h>
+#include <SKSE/Logger.h>
 
 namespace Requirements
 {

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Jonathan Feenstra
+Copyright (C) 2025-2026 Jonathan Feenstra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@ See EXCEPTIONS for additional permissions.
 
 #include "Hooks.h"
 #include "Settings.h"
+
+#include <SKSE/API.h>
+#include <SKSE/Interfaces.h>
 
 SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {

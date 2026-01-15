@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+#include <regex>
+#include <string>
+
 class Settings final
 {
 public:

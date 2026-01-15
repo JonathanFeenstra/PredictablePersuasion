@@ -1,12 +1,20 @@
 #pragma once
 
+#include <RE/D/DialogueMenu.h>
+#include <RE/G/GFxFunctionHandler.h>
+#include <RE/G/GFxValue.h>
+
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+
 namespace Scaleform
 {
 	// the ActionScript 2 code of the dialogue menu only has access to the text of the topics, so additional data needs to be passed
 	struct TopicDisplayData final
 	{
-		std::uint32_t oldColor;
-		std::uint32_t newColor;
+		std::uint32_t oldColor{ 0 };
+		std::uint32_t newColor{ 0 };
 		std::string subtitle;
 	};
 
@@ -32,7 +40,7 @@ namespace Scaleform
 		void Call(Params& a_params) override;
 
 	private:
-		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData{ nullptr };
 
 		void colorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept;
 	};
@@ -63,14 +71,13 @@ namespace Scaleform
 		void Call(Params& a_params) override;
 
 	private:
-		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData{ nullptr };
 
 		RE::GFxValue dialogueMenu_mc;
 		RE::GFxValue subtitleText;
 		RE::GFxValue topicList;
 	};
 
-	
 	class MoveSelectionUpFunctionHandler final : public RE::GFxFunctionHandler
 	{
 	public:
@@ -84,7 +91,7 @@ namespace Scaleform
 		void Call(Params& a_params) override;
 
 	private:
-		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData{ nullptr };
 
 		RE::GFxValue dialogueMenu_mc;
 		RE::GFxValue subtitleText;
@@ -104,7 +111,7 @@ namespace Scaleform
 		void Call(Params& a_params) override;
 
 	private:
-		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData;
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData{ nullptr };
 
 		RE::GFxValue dialogueMenu_mc;
 		RE::GFxValue subtitleText;

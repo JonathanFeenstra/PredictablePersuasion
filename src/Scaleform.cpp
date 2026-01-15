@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Jonathan Feenstra
+Copyright (C) 2025-2026 Jonathan Feenstra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@ See EXCEPTIONS for additional permissions.
 #include "Scaleform.h"
 
 #include "Settings.h"
+
+#include <RE/D/DialogueMenu.h>
+#include <RE/G/GFxFunctionHandler.h>
+#include <RE/G/GFxValue.h>
+#include <RE/G/GPtr.h>
+#include <RE/S/SFTypes.h>
+#include <RE/U/UI.h>
+#include <SKSE/Logger.h>
+
+#include <string>
+#include <unordered_map>
 
 namespace Scaleform
 {

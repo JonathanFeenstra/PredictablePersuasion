@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Jonathan Feenstra
+Copyright (C) 2025-2026 Jonathan Feenstra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,8 +21,33 @@ See EXCEPTIONS for additional permissions.
 
 #include "Events.h"
 #include "Requirements.h"
+#include "Scaleform.h"
 #include "Settings.h"
 #include "StringUtil.h"
+
+#include <RE/A/Actor.h>
+#include <RE/A/ActorValues.h>
+#include <RE/B/BSCoreTypes.h>
+#include <RE/I/IMenu.h>
+#include <RE/M/MenuTopicManager.h>
+#include <RE/M/Misc.h>
+#include <RE/N/NiSmartPointer.h>
+#include <RE/Offsets_VTABLE.h>
+#include <RE/P/PlayerCharacter.h>
+#include <RE/T/TESCondition.h>
+#include <RE/T/TESObjectREFR.h>
+#include <RE/T/TESTopic.h>
+#include <RE/T/TESTopicInfo.h>
+#include <RE/U/UIMessage.h>
+#include <REL/Relocation.h>
+#include <SKSE/Logger.h>
+
+#include <cstdarg>
+#include <format>
+#include <regex>
+#include <string>
+#include <tuple>
+#include <unordered_map>
 
 namespace Hooks
 {
@@ -56,8 +81,8 @@ namespace Hooks
 					if (!dialogue)
 						continue;
 					const auto parentTopic = dialogue->parentTopic;
-					// topics can be reused with a different text (e.g. when selling multiple carcasses with Simple Hunting Overhaul)
-					const auto cacheKey = std::make_tuple(parentTopic->formID, parentTopic->GetFullName());
+					// topics can be reused with a different text (e.g. when selling multiple carcasses with Simple Hunting Overhaul), in which case they need to be reprocessed
+					const auto cacheKey = std::make_tuple(parentTopic->formID, dialogue->topicText);
 					auto where = cache.find(cacheKey);
 					if (where != cache.end()) {
 						dialogue->topicText = where->second;
@@ -223,7 +248,7 @@ namespace Hooks
 	{
 		const auto speaker = RE::MenuTopicManager::GetSingleton()->speaker.get().get();
 		const auto player = RE::PlayerCharacter::GetSingleton();
-		// based on: https://github.com/Scrabx3/Dynamic-Dialogue-Replacer/blob/3ffe893f741a9e1530c9bcb5577465b6e9ccad0b/src/Hooks/Hooks.cpp#L96-L105
+		// based on: https://github.com/KrisV-777/Dynamic-Dialogue-Replacer/blob/3ffe893f741a9e1530c9bcb5577465b6e9ccad0b/src/Hooks/Hooks.cpp#L96-L105
 		auto infoPtr = a_topic->topicInfos;
 		for (auto i = a_topic->numTopicInfos; i > 0; --i) {
 			if (!infoPtr)

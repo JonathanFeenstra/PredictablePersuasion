@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Jonathan Feenstra
+Copyright (C) 2025-2026 Jonathan Feenstra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,6 +21,14 @@ See EXCEPTIONS for additional permissions.
 
 #include "Requirements.h"
 #include "Scaleform.h"
+
+#include <RE/B/BSTEvent.h>
+#include <RE/D/DialogueMenu.h>
+#include <RE/M/MenuOpenCloseEvent.h>
+#include <RE/U/UI.h>
+
+#include <string>
+#include <unordered_map>
 
 namespace Events
 {

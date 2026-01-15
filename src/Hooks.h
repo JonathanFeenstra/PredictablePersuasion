@@ -2,6 +2,23 @@
 
 #include "Scaleform.h"
 
+#include <RE/B/BSCoreTypes.h>
+#include <RE/B/BSString.h>
+#include <RE/D/DialogueMenu.h>
+#include <RE/I/IMenu.h>
+#include <RE/M/MenuTopicManager.h>
+#include <RE/T/TESCondition.h>
+#include <RE/T/TESObjectREFR.h>
+#include <RE/T/TESTopic.h>
+#include <RE/T/TESTopicInfo.h>
+#include <RE/U/UIMessage.h>
+#include <REL/Relocation.h>
+
+#include <functional>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+
 namespace Hooks
 {
 	void Install() noexcept;
@@ -18,18 +35,18 @@ namespace Hooks
 		static inline REL::Relocation<ProcessMessageFn> _ProcessMessageFn;
 
 		// https://stackoverflow.com/a/21439212
-		typedef std::tuple<RE::FormID, std::string> cache_key_t;
+		typedef std::tuple<RE::FormID, RE::BSString> cache_key_t;
 
 		struct cache_key_hash
 		{
 			size_t
-			operator()(cache_key_t const& key) const
+				operator()(cache_key_t const& key) const
 			{
 				size_t seed = 0;
 				const auto& formID = get<0>(key);
 				const auto& text = get<1>(key);
 				seed ^= std::hash<RE::FormID>()(formID) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-				seed ^= std::hash<std::string>()(text) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				seed ^= std::hash<std::string>()(text.c_str()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 				return seed;
 			}
 		};

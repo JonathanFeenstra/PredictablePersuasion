@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2025 Jonathan Feenstra
+Copyright (C) 2025-2026 Jonathan Feenstra
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,6 +18,10 @@ See EXCEPTIONS for additional permissions.
 */
 
 #include "StringUtil.h"
+
+#include <algorithm>
+#include <cctype>
+#include <string_view>
 
 namespace StringUtil
 {

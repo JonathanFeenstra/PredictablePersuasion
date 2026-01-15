@@ -2,6 +2,12 @@
 
 #include "Scaleform.h"
 
+#include <RE/B/BSTEvent.h>
+#include <RE/M/MenuOpenCloseEvent.h>
+
+#include <string>
+#include <unordered_map>
+
 namespace Events
 {
 	class MenuOpenCloseEventSink final : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -18,7 +24,7 @@ namespace Events
 		void operator=(MenuOpenCloseEventSink&&) = delete;
 
 	private:
-		MenuOpenCloseEventSink() {};
+		MenuOpenCloseEventSink() : topicDisplayData(nullptr) {};
 
 		const std::unordered_map<std::string, Scaleform::TopicDisplayData>* topicDisplayData;
 	};
