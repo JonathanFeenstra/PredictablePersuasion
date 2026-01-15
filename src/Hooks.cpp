@@ -82,14 +82,17 @@ namespace Hooks
 						continue;
 					const auto parentTopic = dialogue->parentTopic;
 					// topics can be reused with a different text (e.g. when selling multiple carcasses with Simple Hunting Overhaul), in which case they need to be reprocessed
-					const auto cacheKey = std::make_tuple(parentTopic->formID, dialogue->topicText);
-					auto where = cache.find(cacheKey);
+					const auto cacheKeyBeforeProcessing = std::make_tuple(parentTopic->formID, dialogue->topicText);
+					auto where = cache.find(cacheKeyBeforeProcessing);
 					if (where != cache.end()) {
 						dialogue->topicText = where->second;
 						continue;
 					}
 					processTopic(dialogue);
-					cache[cacheKey] = dialogue->topicText;
+					// prevent reprocessing which may cause the text data to be overwritten with incorrect values (e.g. the tag no longer being recognized)
+					const auto cacheKeyAfterProcessing = std::make_tuple(parentTopic->formID, dialogue->topicText);
+					cache[cacheKeyBeforeProcessing] = dialogue->topicText;
+					cache[cacheKeyAfterProcessing] = dialogue->topicText;
 				}
 			}
 			break;
