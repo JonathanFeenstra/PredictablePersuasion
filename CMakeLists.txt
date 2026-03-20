@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.29)
 
 project(
     PredictablePersuasion
-    VERSION 1.0.8
+    VERSION 1.0.9
     DESCRIPTION "SKSE plugin for Skyrim Special Edition to display more info about persuasion/intimidation/bribe dialogue topics."
     LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
@@ -86,12 +86,10 @@ if(DEFINED OUTPUT_FOLDER)
         VERBATIM
     )
 
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_custom_command(
-            TARGET "${PROJECT_NAME}"
-            POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_PDB_FILE:${PROJECT_NAME}>" "${DLL_FOLDER}/$<TARGET_PDB_FILE_NAME:${PROJECT_NAME}>"
-            VERBATIM
-        )
-    endif()
+    add_custom_command(
+        TARGET "${PROJECT_NAME}"
+        POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_PDB_FILE:${PROJECT_NAME}>" "${DLL_FOLDER}/$<TARGET_PDB_FILE_NAME:${PROJECT_NAME}>"
+        VERBATIM
+    )
 endif()

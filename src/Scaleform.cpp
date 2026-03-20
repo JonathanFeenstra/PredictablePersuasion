@@ -213,9 +213,13 @@ namespace Scaleform
 
 		a_dialogueMenu_mc.SetMember("bIsGameSubtitle", false);
 
-		RE::GFxValue showDialogueText;
-		a_dialogueMenu->uiMovie->CreateFunction(&showDialogueText, handler.get());
-		a_dialogueMenu_mc.SetMember("ShowDialogueText", showDialogueText);
+		RE::GFxValue showDialogueTextOriginal;
+		a_dialogueMenu_mc.GetMember("ShowDialogueText", &showDialogueTextOriginal);
+		a_dialogueMenu_mc.SetMember("ShowDialogueTextOriginal", showDialogueTextOriginal);
+
+		RE::GFxValue showDialogueTextNew;
+		a_dialogueMenu->uiMovie->CreateFunction(&showDialogueTextNew, handler.get());
+		a_dialogueMenu_mc.SetMember("ShowDialogueText", showDialogueTextNew);
 	}
 
 	// replaces: https://github.com/Mardoxx/skyrimui/blob/425aa8a31de31fb11fe78ee6cec799f4ba31af03/src/dialoguemenu/DialogueMenu.as#L116-L119
@@ -226,10 +230,11 @@ namespace Scaleform
 			return;
 		}
 
-		const auto& astrText = a_params.args[0];
+		auto thisPtr = a_params.thisPtr;
+		thisPtr->Invoke("ShowDialogueTextOriginal", nullptr, a_params.args, a_params.argCount);
 
+		// new part of the function
 		subtitleText.SetMember("textColor", defaultSubtitleColor);
-		subtitleText.Invoke("SetText", nullptr, &astrText, RE::UPInt(1));
 		dialogueMenu_mc.SetMember("bIsGameSubtitle", true);
 	}
 
