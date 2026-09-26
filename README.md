@@ -6,5 +6,5 @@ This plugin is made using [CommonLibSSE NG](https://github.com/alandtse/CommonLi
 ## User requirements
 
 * [SKSE64](https://www.nexusmods.com/skyrimspecialedition/mods/30379) or [SKSE VR](https://www.nexusmods.com/skyrimspecialedition/mods/30457)
-* [Address Library for SKSE plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
+* [Address Library for SKSE plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444) or [VR Address Library for SKSEVR](https://www.nexusmods.com/skyrimspecialedition/mods/58101)
 * Adjust the settings in the INI file so the tag regex patterns match your game's language and the text colors match your UI mods
