@@ -14,7 +14,6 @@
 #include <RE/U/UIMessage.h>
 #include <REL/Relocation.h>
 
-#include <functional>
 #include <string>
 #include <tuple>
 #include <unordered_map>

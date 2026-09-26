@@ -29,6 +29,7 @@ See EXCEPTIONS for additional permissions.
 #include <RE/U/UI.h>
 #include <SKSE/Logger.h>
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 
@@ -138,7 +139,7 @@ namespace Scaleform
 		if (a_topicList.GetMember("iHighlightedIndex", &iHighlightedIndex) && iHighlightedIndex.GetNumber() != -1) {
 			RE::GFxValue entriesA;
 			a_topicList.GetMember("EntriesA", &entriesA);
-			entriesA.GetElement(iHighlightedIndex.GetNumber(), &highlightedEntry);
+			entriesA.GetElement(static_cast<uint32_t>(iHighlightedIndex.GetNumber()), &highlightedEntry);
 		} else {
 			a_topicList.Invoke("__get__selectedEntry", &highlightedEntry);
 		}
