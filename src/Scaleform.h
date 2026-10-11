@@ -15,10 +15,13 @@ namespace Scaleform
 	{
 		std::uint32_t oldColor{ 0 };
 		std::uint32_t newColor{ 0 };
+		bool hasSpeechCheck{ false };
 		std::string subtitle;
 	};
 
-	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData, bool a_smartTalkSetEntryTextCustomFunctionEnabled) noexcept;
+	void InstallHooks(
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData,
+		bool a_smartTalkSetEntryTextCustomFunctionEnabled) noexcept;
 
 	void ShowModSubtitle(
 		RE::GFxValue a_dialogueMenu_mc,
@@ -29,7 +32,11 @@ namespace Scaleform
 	bool IsTopicListShown(RE::GFxValue a_dialogueMenu_mc) noexcept;
 	RE::GFxValue GetHiglightedEntry(RE::GFxValue a_topicList) noexcept;
 
-	void ColorText(RE::GFxValue a_textField, bool a_topicIsNew, const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
+	void ColorText(
+		RE::GFxValue a_textField,
+		bool a_topicIsNew,
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData,
+		bool a_isSmartTalkQuestLine) noexcept;
 
 	class SetEntryTextFunctionHandler final : public RE::GFxFunctionHandler
 	{

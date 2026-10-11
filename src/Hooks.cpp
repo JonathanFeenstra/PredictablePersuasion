@@ -120,20 +120,24 @@ namespace Hooks
 				resultText = Settings::checkSuccessText;
 				displayData.newColor = Settings::successColor;
 				displayData.oldColor = Settings::successColor;
+				displayData.hasSpeechCheck = true;
 			} else {
 				resultText = Settings::checkFailureText;
 				displayData.newColor = Settings::failureColorNew;
 				displayData.oldColor = Settings::failureColorOld;
+				displayData.hasSpeechCheck = true;
 			}
 		} else if (speechCheckData.tagType != SPEECH_CHECK_TYPE::kNone) {
 			impliedCheckType = speechCheckData.tagType;
 			resultText = Settings::noCheckText;
 			displayData.newColor = Settings::noCheckColorNew;
 			displayData.oldColor = Settings::noCheckColorOld;
+			displayData.hasSpeechCheck = true;
 		} else {
 			if (Settings::applyTopicColors) {
 				displayData.newColor = Settings::regularColorNew;
 				displayData.oldColor = Settings::regularColorOld;
+				displayData.hasSpeechCheck = false;
 				topicDisplayData[a_dialogue->topicText.c_str()] = displayData;
 			}
 

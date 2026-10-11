@@ -36,7 +36,9 @@ See EXCEPTIONS for additional permissions.
 
 namespace Scaleform
 {
-	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData, bool a_smartTalkSetEntryTextCustomFunctionEnabled) noexcept
+	void InstallHooks(
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData,
+		bool a_smartTalkSetEntryTextCustomFunctionEnabled) noexcept
 	{
 		const auto ui = RE::UI::GetSingleton();
 		if (!ui) {
@@ -152,7 +154,11 @@ namespace Scaleform
 		return highlightedEntry;
 	}
 
-	void ColorText(RE::GFxValue a_textField, bool a_topicIsNew, const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	void ColorText(
+		RE::GFxValue a_textField,
+		bool a_topicIsNew,
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData,
+		bool a_isSmartTalkQuestLine) noexcept
 	{
 		RE::GFxValue text;
 		a_textField.GetMember("text", &text);
@@ -162,6 +168,10 @@ namespace Scaleform
 			return;
 
 		const auto& displayData = where->second;
+
+		if (a_isSmartTalkQuestLine && !displayData.hasSpeechCheck)
+			return;  // don't override SmartTalk's color for quest lines that don't have a speech check
+
 		a_textField.SetMember("textColor", a_topicIsNew ? displayData.newColor : displayData.oldColor);
 	}
 
@@ -203,7 +213,7 @@ namespace Scaleform
 
 		RE::GFxValue topicIsNew;
 		const auto newTopic = !aEntryObject.GetMember("topicIsNew", &topicIsNew) || topicIsNew.GetBool();
-		ColorText(textField, newTopic, topicDisplayData);
+		ColorText(textField, newTopic, topicDisplayData, false);
 	}
 
 	void SmartTalkSetEntryTextCustomFunctionHandler::Install(
@@ -228,14 +238,13 @@ namespace Scaleform
 	{
 		if (a_params.argCount < 3) {
 			logger::error("SetEntryTextCustom: Expected 3 arguments, found {}", a_params.argCount);
-			a_params.retVal->SetBoolean(false);
 			return;
 		}
 
 		auto thisPtr = a_params.thisPtr;
 		auto& aEntryClip = a_params.args[0];
 		auto& aEntryObject = a_params.args[1];
-		//auto& aIsQuestLine = a_params.args[2];
+		auto& aIsQuestLine = a_params.args[2];
 
 		thisPtr->Invoke("SetEntryTextCustomOriginal", a_params.retVal, a_params.args, a_params.argCount);
 
@@ -246,7 +255,7 @@ namespace Scaleform
 
 		RE::GFxValue topicIsNew;
 		const auto newTopic = !aEntryObject.GetMember("topicIsNew", &topicIsNew) || topicIsNew.GetBool();
-		ColorText(textField, newTopic, topicDisplayData);
+		ColorText(textField, newTopic, topicDisplayData, aIsQuestLine.GetBool());
 	}
 
 	void ShowDialogueTextFunctionHandler::Install(const RE::DialogueMenu* a_dialogueMenu, RE::GFxValue a_dialogueMenu_mc, RE::GFxValue a_subtitleText) noexcept
