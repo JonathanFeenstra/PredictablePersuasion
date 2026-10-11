@@ -3,7 +3,7 @@ includes("lib/commonlibsse-ng")
 
 -- set project constants
 set_project("Predictable Persuasion")
-set_version("1.0.10")
+set_version("1.0.11")
 set_license("GPL-3.0-or-later WITH Modding Exception AND GPL-3.0 Linking Exception (with Corresponding Source)")
 set_languages("c++23")
 set_warnings("allextra")
@@ -25,7 +25,7 @@ target("PredictablePersuasion")
 	
     -- add src files
     add_files("src/**.cpp")
-    add_headerfiles("src/**.h")
+    add_headerfiles("src/**.h", "src/**.hpp")
     add_includedirs("src")
     set_pcxxheader("src/PCH.h")
 

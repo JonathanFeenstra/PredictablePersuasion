@@ -20,6 +20,7 @@ See EXCEPTIONS for additional permissions.
 #include "Scaleform.h"
 
 #include "Settings.h"
+#include "SmartTalkSettings.hpp"
 
 #include <RE/D/DialogueMenu.h>
 #include <RE/G/GFxFunctionHandler.h>
@@ -35,7 +36,7 @@ See EXCEPTIONS for additional permissions.
 
 namespace Scaleform
 {
-	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData, bool a_smartTalkSetEntryTextCustomFunctionEnabled) noexcept
 	{
 		const auto ui = RE::UI::GetSingleton();
 		if (!ui) {
@@ -68,7 +69,11 @@ namespace Scaleform
 		}
 
 		if (Settings::applyTopicColors) {
-			SetEntryTextFunctionHandler::Install(dialogueMenu, topicList, a_topicDisplayData);
+			if (a_smartTalkSetEntryTextCustomFunctionEnabled) {
+				SmartTalkSetEntryTextCustomFunctionHandler::Install(dialogueMenu, topicList, a_topicDisplayData);
+			} else {
+				SetEntryTextFunctionHandler::Install(dialogueMenu, topicList, a_topicDisplayData);
+			}
 		}
 
 		if (Settings::showSubtitles != Settings::SHOW_SUBTITLES::kNever) {
@@ -147,6 +152,19 @@ namespace Scaleform
 		return highlightedEntry;
 	}
 
+	void ColorText(RE::GFxValue a_textField, bool a_topicIsNew, const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
+	{
+		RE::GFxValue text;
+		a_textField.GetMember("text", &text);
+		const auto textStr = std::string(text.GetString());
+		const auto where = a_topicDisplayData->find(textStr);
+		if (where == a_topicDisplayData->end())
+			return;
+
+		const auto& displayData = where->second;
+		a_textField.SetMember("textColor", a_topicIsNew ? displayData.newColor : displayData.oldColor);
+	}
+
 	void SetEntryTextFunctionHandler::Install(
 		const RE::DialogueMenu* a_dialogueMenu,
 		RE::GFxValue a_topicList,
@@ -185,20 +203,50 @@ namespace Scaleform
 
 		RE::GFxValue topicIsNew;
 		const auto newTopic = !aEntryObject.GetMember("topicIsNew", &topicIsNew) || topicIsNew.GetBool();
-		colorText(textField, newTopic);
+		ColorText(textField, newTopic, topicDisplayData);
 	}
 
-	void SetEntryTextFunctionHandler::colorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept
+	void SmartTalkSetEntryTextCustomFunctionHandler::Install(
+		const RE::DialogueMenu* a_dialogueMenu,
+		RE::GFxValue a_topicList,
+		const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept
 	{
-		RE::GFxValue text;
-		a_textField.GetMember("text", &text);
-		const auto textStr = std::string(text.GetString());
-		const auto where = topicDisplayData->find(textStr);
-		if (where == topicDisplayData->end())
+		auto handler = RE::make_gptr<Scaleform::SmartTalkSetEntryTextCustomFunctionHandler>();
+		handler->topicDisplayData = a_topicDisplayData;
+
+		RE::GFxValue setEntryTextCustomOriginal;
+		a_topicList.GetMember(SmartTalkSettings::sQuestUISetEntryTextCustomFunction.c_str(), &setEntryTextCustomOriginal);
+		a_topicList.SetMember("SetEntryTextCustomOriginal", setEntryTextCustomOriginal);
+
+		RE::GFxValue setEntryTextCustomNew;
+		a_dialogueMenu->uiMovie->CreateFunction(&setEntryTextCustomNew, handler.get());
+		a_topicList.SetMember(SmartTalkSettings::sQuestUISetEntryTextCustomFunction.c_str(), setEntryTextCustomNew);
+	}
+
+	// replaces: https://github.com/Seb263/SkyrimSE_SmartTalk/blob/941945952485cd2ef624a027dfcdf3593e1b6a04/src/Features/Quest.hpp#L293-L311
+	void SmartTalkSetEntryTextCustomFunctionHandler::Call(Params& a_params)
+	{
+		if (a_params.argCount < 3) {
+			logger::error("SetEntryTextCustom: Expected 3 arguments, found {}", a_params.argCount);
+			a_params.retVal->SetBoolean(false);
+			return;
+		}
+
+		auto thisPtr = a_params.thisPtr;
+		auto& aEntryClip = a_params.args[0];
+		auto& aEntryObject = a_params.args[1];
+		//auto& aIsQuestLine = a_params.args[2];
+
+		thisPtr->Invoke("SetEntryTextCustomOriginal", a_params.retVal, a_params.args, a_params.argCount);
+
+		// new part of the function
+		RE::GFxValue textField;
+		if (!aEntryClip.GetMember("textField", &textField) || textField.IsUndefined())
 			return;
 
-		const auto& displayData = where->second;
-		a_textField.SetMember("textColor", a_topicIsNew ? displayData.newColor : displayData.oldColor);
+		RE::GFxValue topicIsNew;
+		const auto newTopic = !aEntryObject.GetMember("topicIsNew", &topicIsNew) || topicIsNew.GetBool();
+		ColorText(textField, newTopic, topicDisplayData);
 	}
 
 	void ShowDialogueTextFunctionHandler::Install(const RE::DialogueMenu* a_dialogueMenu, RE::GFxValue a_dialogueMenu_mc, RE::GFxValue a_subtitleText) noexcept
@@ -309,7 +357,7 @@ namespace Scaleform
 		handler->dialogueMenu_mc = a_dialogueMenu_mc;
 		handler->subtitleText = a_subtitleText;
 		handler->topicList = a_topicList;
-		
+
 		RE::GFxValue moveSelectionDownOriginal;
 		a_topicList.GetMember("moveSelectionDown", &moveSelectionDownOriginal);
 		a_topicList.SetMember("moveSelectionDownOriginal", moveSelectionDownOriginal);

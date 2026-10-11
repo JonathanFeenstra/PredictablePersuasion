@@ -27,5 +27,6 @@ namespace Events
 		MenuOpenCloseEventSink() : topicDisplayData(nullptr) {};
 
 		const std::unordered_map<std::string, Scaleform::TopicDisplayData>* topicDisplayData;
+		bool smartTalkSetEntryTextCustomFunctionEnabled;
 	};
 }

@@ -18,7 +18,7 @@ namespace Scaleform
 		std::string subtitle;
 	};
 
-	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
+	void InstallHooks(const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData, bool a_smartTalkSetEntryTextCustomFunctionEnabled) noexcept;
 
 	void ShowModSubtitle(
 		RE::GFxValue a_dialogueMenu_mc,
@@ -28,6 +28,8 @@ namespace Scaleform
 
 	bool IsTopicListShown(RE::GFxValue a_dialogueMenu_mc) noexcept;
 	RE::GFxValue GetHiglightedEntry(RE::GFxValue a_topicList) noexcept;
+
+	void ColorText(RE::GFxValue a_textField, bool a_topicIsNew, const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
 
 	class SetEntryTextFunctionHandler final : public RE::GFxFunctionHandler
 	{
@@ -41,8 +43,20 @@ namespace Scaleform
 
 	private:
 		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData{ nullptr };
+	};
 
-		void colorText(RE::GFxValue a_textField, bool a_topicIsNew) noexcept;
+	class SmartTalkSetEntryTextCustomFunctionHandler final : public RE::GFxFunctionHandler
+	{
+	public:
+		static void Install(
+			const RE::DialogueMenu* a_dialogueMenu,
+			RE::GFxValue a_topicList,
+			const std::unordered_map<std::string, TopicDisplayData>* a_topicDisplayData) noexcept;
+
+		void Call(Params& a_params) override;
+
+	private:
+		const std::unordered_map<std::string, TopicDisplayData>* topicDisplayData{ nullptr };
 	};
 
 	class ShowDialogueTextFunctionHandler final : public RE::GFxFunctionHandler

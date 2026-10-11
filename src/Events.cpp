@@ -21,12 +21,15 @@ See EXCEPTIONS for additional permissions.
 
 #include "Requirements.h"
 #include "Scaleform.h"
+#include "SmartTalkSettings.hpp"
 
 #include <RE/B/BSTEvent.h>
 #include <RE/D/DialogueMenu.h>
 #include <RE/M/MenuOpenCloseEvent.h>
 #include <RE/U/UI.h>
+#include <SKSE/Logger.h>
 
+#include <filesystem>
 #include <string>
 #include <unordered_map>
 
@@ -36,6 +39,17 @@ namespace Events
 	{
 		const auto singleton = GetSingleton();
 		singleton->topicDisplayData = a_topicDisplayData;
+
+		if (std::filesystem::exists("Data/SKSE/Plugins/SmartTalk.dll")) {
+			if (!SmartTalkSettings::ReadSettings()) {
+				logger::warn("Failed to load Smart Talk settings file. Default settings will be used.");
+			}
+
+			singleton->smartTalkSetEntryTextCustomFunctionEnabled = !SmartTalkSettings::sQuestUISetEntryTextCustomFunction.empty();
+		} else {
+			singleton->smartTalkSetEntryTextCustomFunctionEnabled = false;
+		}
+
 		if (const auto ui = RE::UI::GetSingleton()) {
 			ui->AddEventSink(singleton);
 		}
@@ -50,7 +64,7 @@ namespace Events
 	RE::BSEventNotifyControl MenuOpenCloseEventSink::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 	{
 		if (a_event->menuName == RE::DialogueMenu::MENU_NAME && a_event->opening && Requirements::AreRequirementsMet()) {
-			Scaleform::InstallHooks(topicDisplayData);
+			Scaleform::InstallHooks(topicDisplayData, smartTalkSetEntryTextCustomFunctionEnabled);
 		}
 		return RE::BSEventNotifyControl::kContinue;
 	}
